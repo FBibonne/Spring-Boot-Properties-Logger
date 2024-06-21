@@ -1,6 +1,5 @@
 package fr.insee.boot;
 
-import lombok.CustomLog;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.*;
@@ -10,8 +9,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@CustomLog
 public record PropertiesLogger() implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
+
+    private static final LocalLogger log = new LocalLogger(PropertiesLogger.class);
 
     public static final String SEPARATION_LINE="================================================================================";
 

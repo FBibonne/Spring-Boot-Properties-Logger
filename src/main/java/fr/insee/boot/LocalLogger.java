@@ -5,35 +5,22 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.Supplier;
 
-public interface LocalLogger {
+public record LocalLogger(Logger logger) {
 
-    Logger log = LoggerFactory.getLogger(LocalLogger.class);
-
-    static LocalLogger of(Class<?> clazz) {
-        return new LocalLogger() {
-
-            private final Logger logger = LoggerFactory. getLogger(clazz);
-
-            @Override
-            public void debug(Supplier<String> message) {
-                logger.atDebug().log(message);
-            }
-
-            @Override
-            public void trace(Supplier<String> message) {
-                logger.atDebug().log(message);
-            }
-
-            @Override
-            public void info(Supplier<String> message) {
-                log.atInfo().log(message);
-            }
-        };
+    public LocalLogger(Class<?> clazz) {
+        this(LoggerFactory.getLogger(clazz));
     }
 
-    void debug(Supplier<String> message);
+    public void debug(Supplier<String> message) {
+        logger.atDebug().log(message);
+    }
 
-    void trace(Supplier<String> message);
+    public void trace(Supplier<String> message) {
+        logger.atDebug().log(message);
+    }
 
-    void info(Supplier<String> message);
+    public void info(Supplier<String> message) {
+        logger.atInfo().log(message);
+    }
+
 }
