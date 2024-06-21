@@ -17,7 +17,7 @@ class WebAppIntegrationTest {
 
     @Test
     void contextLoads() {
-        assertThat(((Slf4jStub)LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString()).isEqualTo(
+        assertThat(((Slf4jStub)LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString()).hasToString(
                 """
                        [INFO]\s
                        ================================================================================
