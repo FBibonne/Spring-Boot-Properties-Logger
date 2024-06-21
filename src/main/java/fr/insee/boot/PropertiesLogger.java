@@ -3,39 +3,38 @@ package fr.insee.boot;
 import lombok.CustomLog;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.AbstractEnvironment;
-import org.springframework.core.env.EnumerablePropertySource;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @CustomLog
 public record PropertiesLogger() implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
 
-    private static final String SEPARATION_LINE="================================================================================";
+    public static final String SEPARATION_LINE="================================================================================";
 
     private static final Set<String> DEFAULT_PROPS_WITH_HIDDEN_VALUES = Set.of("password", "pwd", "token", "secret", "credential", "pw");
     private static final Set<String> DEFAULT_PREFIX_FOR_PROPERTIES = Set.of("debug", "info", "logging", "spring", "server","management", "keycloak", "springdoc");
-    private static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of("systemProperties", "systemEnvironment");
+    private static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
 
     private static final String KEY_FOR_PROPS_WITH_HIDDEN_VALUES = "properties.logger.with-hidden-values";
     private static final String KEY_FOR_PREFIX_FOR_PROPERTIES = "properties.logger.prefix-for-properties";
     private static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
+    public static final String MASK = "******";
 
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-        //TODO log info
-        //TODO log debug
+        log.debug(()->"Starting PropertiesLogger on ApplicationEnvironmentPreparedEvent");
         final Environment environement = event.getEnvironment();
+        log.trace(()->"Collecting properties to configure PropertiesLogger");
         final Set<String> propertiesWithHiddenValues = getPropertyOrDefaultAndTrace(environement, KEY_FOR_PROPS_WITH_HIDDEN_VALUES, DEFAULT_PROPS_WITH_HIDDEN_VALUES);
-        final PropertyNameNonNullFilterWithPrefix nonNullPropertyNameFilterWithPrefix = new PropertyNameNonNullFilterWithPrefix(getPropertyOrDefaultAndTrace(environement, KEY_FOR_PREFIX_FOR_PROPERTIES, DEFAULT_PREFIX_FOR_PROPERTIES));
+        final Set<String> allowedPrefixForProperties = getPropertyOrDefaultAndTrace(environement, KEY_FOR_PREFIX_FOR_PROPERTIES, DEFAULT_PREFIX_FOR_PROPERTIES);
         final Set<String> ignoredPropertySources = getPropertyOrDefaultAndTrace(environement, KEY_FOR_SOURCES_IGNORED, DEFAULT_SOURCES_IGNORED);
         final Set<String> propertySourceNames = new HashSet<>();
+
+        log.debug(()->"Start logging properties with prefix "+allowedPrefixForProperties+" for all properties sources except "+ignoredPropertySources+". Values masked for properties whose keys contain "+propertiesWithHiddenValues);
 
         var stringWithPropertiesToDisplay= new StringBuilder();
 
@@ -43,7 +42,7 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
                 .filter(source->willBeProcessed(source, ignoredPropertySources))
                 .flatMap(source->rememberPropertySourceNameThenFlatPropertiesNames(source, propertySourceNames))
                 .distinct()
-                .filter(nonNullPropertyNameFilterWithPrefix)
+                .filter(key -> nonNullKeyWithPrefix(key, allowedPrefixForProperties))
                 .forEach(key-> resolveValueThenAppendToDisplay(key, stringWithPropertiesToDisplay, propertiesWithHiddenValues, environement));
 
         stringWithPropertiesToDisplay
@@ -74,7 +73,7 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
 
     private boolean isNotIgnored(PropertySource<?> propertySource, Set<String> ignoredPropertySources) {
         if (ignoredPropertySources.contains(propertySource.getName())){
-            log.debug(()->propertySource+ " is listed to be ignored");
+            log.trace(()->propertySource+ " is listed to be ignored");
             return false;
         }
         return true;
@@ -88,13 +87,15 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
 
     private String resolveValueThenMaskItIfSecret(String key, Set<String> propertiesWithHiddenValues, Environment environement) {
         if (propertiesWithHiddenValues.stream().anyMatch(key::contains)) {
-            return "******";
+            return MASK;
         }
         return environement.getProperty(key);
     }
 
     private Stream<String> rememberPropertySourceNameThenFlatPropertiesNames(PropertySource<?> propertySource, Set<String> propertySourceNames) {
-        propertySourceNames.add(propertySource.getName());
+        String propertySourceName = propertySource.getName();
+        log.trace(()->"Flat properties for "+ propertySourceName);
+        propertySourceNames.add(propertySourceName);
         return Arrays.stream(((EnumerablePropertySource<?>)propertySource).getPropertyNames());
     }
 
@@ -112,21 +113,19 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
         return result;
     }
 
-    private record PropertyNameNonNullFilterWithPrefix(Set<String> prefixes) implements Predicate<String>{
-
-        @Override
-        public boolean test(String key){
-            log.trace(()->"Check if property "+key+" can be displayed");
-            if(key==null){
-                return false;
-            }
-            for(String prefix:prefixes){
-                if(key.startsWith(prefix)){
-                    return true;
-                }
-            }
-            log.debug(()->key+ " doesn't start with a logable prefix");
-           return false;
+    private boolean nonNullKeyWithPrefix(String key, Set<String> allowedPrefixForProperties){
+        log.trace(()->"Check if property "+key+" can be displayed");
+        if(key==null){
+            return false;
         }
+        for(String prefix:allowedPrefixForProperties){
+            if(key.startsWith(prefix)){
+                return true;
+            }
+        }
+        log.debug(()->key+ " doesn't start with a logable prefix");
+        return false;
     }
+
+
 }
