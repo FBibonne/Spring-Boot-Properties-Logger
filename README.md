@@ -100,10 +100,38 @@ Values of [properties with secrets](#properties-with-hidden-values) are hidden w
 `******` is displayed instead. For example `spring.datasource.password = ******`. To be hidden, the 
 property key must contain one of the words from the list [properties with secrets](#properties-with-hidden-values).
 
-## Configuration [WIP]
+## Configuration
+
+We describe here configurations which can be applied to the module _Properties Logger_ via 
+properties prefixed by `properties.logger`. They are three of them:
+- [`properties.logger.sources-ignored`](#excluded-properties-sources)
+- [`properties.logger.prefix-for-properties`](#prefix-list-for-displayed-properties)
+- [`properties.logger.with-hidden-values`](#properties-with-hidden-values)
 
 ### Excluded properties sources
 
+| Related Property                    | Default value                        |
+|-------------------------------------|:-------------------------------------|
+| `properties.logger.sources-ignored` | systemProperties, systemEnvironment  |
+
+At starting, Spring Boot can process many property sources and not all of them  provide values for
+the properties used in your application. Particularly the system properties (java properties which 
+can be read with `System#getProperty`) and the OS environment variables (can be read with `System#getenv`)
+contain many key-value pairs which you do not directly use in your application : displaying 
+them make the log too much verbose. So you can exclude the properties key defined by these property
+sources listing them in the  `properties.logger.sources-ignored`.
+
+By default the system properties (`systemProperties`) and the environment variables(`systemEnvironment`)
+are excluded. You can exclude more properties source by adding their names to the list. 
+For example, to exclude also properties read from the file application.properties, 
+the command line arguments and the `properties` attribute of `@SpringBootTest` and others 
+@*Test annotations, you should set these values :
+
+
 ### Prefix list for displayed properties
 
+**Feature controller by `properties.logger.prefix-for-propertie`**
+
 ### Properties with hidden values
+
+**Feature controller by `properties.logger.with-hidden-values`**
