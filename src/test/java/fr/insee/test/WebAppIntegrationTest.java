@@ -10,29 +10,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = WebAppIntegrationTest.class, properties = {
         "properties.logger.sources-ignored = systemEnvironment",
-        "properties.logger.prefix-for-properties = debug, info, logging, spring, server, management, properties, springdoc, fr"
+        "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr"
 })
 @Configuration
 class WebAppIntegrationTest {
 
     @Test
     void contextLoads() {
-        assertThat(((Slf4jStub)LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString()).hasToString(
-                """
-                       [INFO]\s
-                       ================================================================================
-                                               Values of properties from sources :
-                       - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'
-                       - Inlined Test Properties
-                       - systemProperties
-                                                            ====
-                       spring.jmx.enabled = false
-                       properties.logger.sources-ignored = systemEnvironment
-                       properties.logger.prefix-for-properties = debug, info, logging, spring, server, management, properties, springdoc, fr
-                       fr.insee.test = ok
-                       fr.insee.secret = ******
-                       ================================================================================
-                       """);
+        assertThat(((Slf4jStub)LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString()).hasToString(("""
+                [INFO] %n\
+                ================================================================================
+                                        Values of properties from sources :
+                - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'%n\
+                - Inlined Test Properties%n\
+                - systemProperties%n\
+                                                     ====%n\
+                spring.jmx.enabled = false%n\
+                properties.logger.sources-ignored = systemEnvironment%n\
+                properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr%n\
+                fr.insee.test = ok%n\
+                fr.insee.secret = ******%n\
+                ================================================================================%n""").formatted()
+               );
     }
 
 }
