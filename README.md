@@ -118,15 +118,28 @@ At starting, Spring Boot can process many property sources and not all of them  
 the properties used in your application. Particularly the system properties (java properties which 
 can be read with `System#getProperty`) and the OS environment variables (can be read with `System#getenv`)
 contain many key-value pairs which you do not directly use in your application : displaying 
-them make the log too much verbose. So you can exclude the properties key defined by these property
+them make the log too much verbose. So you can exclude the properties key exclusively defined by these property
 sources listing them in the  `properties.logger.sources-ignored`.
 
 By default the system properties (`systemProperties`) and the environment variables(`systemEnvironment`)
 are excluded. You can exclude more properties source by adding their names to the list. 
-For example, to exclude also properties read from the file application.properties, 
-the command line arguments and the `properties` attribute of `@SpringBootTest` and others 
+For example, to not not take into account property keys from the file application.properties, a file with a relative path
+`../secrets/secret.properties`, the command line arguments, the `properties` attribute of `@SpringBootTest` and others 
 @*Test annotations, you should set these values :
+```properties
+properties.logger.sources-ignored= systemProperties, systemEnvironment,\
+[application.properties],\
+../secrets/secret.properties,\
+commandLineArgs,\
+Inlined\ Test\ Properties
+```
 
+# First set default exclusions : RECOMMENDED
+# Then add others exclusions :
+## for the the application.properties file :
+## for ../secrets/secret.properties file :
+## for command ligne arguments :
+## properties attributs for tests :
 
 ### Prefix list for displayed properties
 
