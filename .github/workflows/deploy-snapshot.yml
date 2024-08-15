@@ -23,5 +23,4 @@ jobs:
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
-            cat ~/.m2/settings.xml
-            mvn -B -X deploy
+            mvn -B deploy
