@@ -20,6 +20,8 @@ jobs:
             # overrides the file ~/.m2/settings.xml with data to publish to maven pkg server with id github
             overwrite-settings: true
         - name: Build
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           run: |
             cat ~/.m2/settings.xml
-            mvn -B install deploy
+            mvn -B -X deploy
