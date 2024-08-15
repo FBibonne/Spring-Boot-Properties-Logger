@@ -1,0 +1,23 @@
+name: 'Build and Deploy snapshot'
+
+permissions:
+  contents: write
+
+on:
+    push:
+        branches: master
+
+jobs:
+    build:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Set up JDK
+          uses: actions/setup-java@v4
+          with:
+            java-version: '17'
+            distribution: 'temurin'
+            # overrides the file ~/.m2/settings.xml with data to publish to maven pkg server with id github
+            overwrite-settings: true
+        - name: Build
+          run: 'mvn -B install deploy'
