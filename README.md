@@ -123,9 +123,14 @@ sources listing them in the  `properties.logger.sources-ignored`.
 
 By default the system properties (`systemProperties`) and the environment variables(`systemEnvironment`)
 are excluded. You can exclude more properties source by adding their names to the list. 
-For example, to not not take into account property keys from the file application.properties, a file with a relative path
-`../secrets/secret.properties`, the command line arguments, the `properties` attribute of `@SpringBootTest` and others 
-@*Test annotations, you should set these values :
+
+> For example, to not not take into account property keys from :
+> 1. the file application.properties
+> 2. a file with a relative path ` ../secrets/secret.properties`
+> 3. the command line arguments
+> 4. the `properties` attribute of `@SpringBootTest` and others @*Test annotations,
+> you should set these values :
+
 ```properties
 properties.logger.sources-ignored= systemProperties, systemEnvironment,\
 [application.properties],\
@@ -134,16 +139,16 @@ commandLineArgs,\
 Inlined\ Test\ Properties
 ```
 
-# First set default exclusions : RECOMMENDED
-# Then add others exclusions :
-## for the the application.properties file :
-## for ../secrets/secret.properties file :
-## for command ligne arguments :
-## properties attributs for tests :
+> At first line, set default exclusions (RECOMMENDED) then add others exclusions :
+>
+> 2. at second line, for the the application.properties file,
+> 3. at third line for ../secrets/secret.properties file
+> 4. at fourth line for command ligne arguments
+> 5. at fifth line for then properties attributes for tests
 
 ### Prefix list for displayed properties
 
-**Feature controller by `properties.logger.prefix-for-propertie`**
+**Feature controller by `properties.logger.prefix-for-properties`**
 
 ### Properties with hidden values
 
