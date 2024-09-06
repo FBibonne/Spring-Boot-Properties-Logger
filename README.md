@@ -6,7 +6,7 @@ detected by Spring Boot and their values resolved by Spring Boot.
 ## Requirements
 
 The _properties Logger_ module is designed to work with :
-- Spring Boot 3.3+ (an so java 17)
+- Spring Boot 3.3+ (an so java 17+)
 - Servlet web application
 - Reactive web application (not tested)
 - Batch application application (not tested)
@@ -32,6 +32,7 @@ it locally before using it :
 $ git clone https://github.com/FBibonne/Properties-Logger.git --depth=1 --branch=master
 $ mvn install -f Properties-Logger/pom.xml
 ```
+Now ou can also download it from [the github project packages](https://github.com/FBibonne/Properties-Logger/packages/2229078)
 
 2. The module module _Properties Logger_ logs its message with properties and their values
 at the info level : so its **log level must be at least INFO**. DEBUG (or TRACE) give (much) more
@@ -148,8 +149,24 @@ Inlined\ Test\ Properties
 
 ### Prefix list for displayed properties
 
-**Feature controller by `properties.logger.prefix-for-properties`**
+| Related Property                    | Default value                        |
+|-------------------------------------|:-------------------------------------|
+| `properties.logger.prefix-for-properties` | debug, trace, info, logging, spring, server, management, springdoc, properties  |
+
+        for (String prefix : allowedPrefixForProperties) {
+            if (key.startsWith(prefix)) {
+                return true;
+            }
+        }
 
 ### Properties with hidden values
 
-**Feature controller by `properties.logger.with-hidden-values`**
+
+| Related Property                    | Default value                        |
+|-------------------------------------|:-------------------------------------|
+| `properties.logger.with-hidden-values` | password, pwd, token, secret, credential, pw  |
+
+        if (propertiesWithHiddenValues.stream().anyMatch(key::contains)) {
+            return `******`
+        }
+        return environement.getProperty(key);
