@@ -7,12 +7,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.3.2</version>
+        <version>3.3.3</version>
     </parent>
 
     <groupId>fr.insee</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -20,6 +20,25 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <contributors>
+        <contributor>
+            <name>Fabrice Bibonne</name>
+            <organization>Insee</organization>
+            <url>https://github.com/Fbibonne</url>
+        </contributor>
+    </contributors>
+
+    <issueManagement>
+        <url>https://github.com/FBibonne/Properties-Logger/issues</url>
+    </issueManagement>
+
+    <description>
+        Properties Logger is a module for Spring Boot 3+ apps which early logs properties detected by Spring Boot
+        and their values resolved by Spring Boot.
+    </description>
+
+    <url>https://github.com/FBibonne/Properties-Logger?tab=readme-ov-file#readme</url>
 
     <scm>
         <developerConnection>scm:git:https://github.com/FBibonne/Properties-Logger.git</developerConnection>

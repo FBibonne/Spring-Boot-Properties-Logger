@@ -6,6 +6,7 @@ detected by Spring Boot and their values resolved by Spring Boot.
 ## Requirements
 
 The _properties Logger_ module is designed to work with :
+
 - Spring Boot 3.3+ (an so java 17+)
 - Servlet web application
 - Reactive web application (not tested)
@@ -16,7 +17,9 @@ The _properties Logger_ module is designed to work with :
 ## Usage
 
 Usage is simple : just add this dependency inside your pom.xml :
+
 ```xml
+
 <dependency>
     <groupId>fr.insee</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
@@ -24,23 +27,27 @@ Usage is simple : just add this dependency inside your pom.xml :
 </dependency>
 ```
 
-NB : 
+NB :
 
 1. the lib is not deployed on maven central for the moment so you must install
-it locally before using it :
+   it locally before using it :
+
 ```shell
 $ git clone https://github.com/FBibonne/Properties-Logger.git --depth=1 --branch=master
 $ mvn install -f Properties-Logger/pom.xml
 ```
-Now ou can also download it from [the github project packages](https://github.com/FBibonne/Properties-Logger/packages/2229078)
+
+Now ou can also download it
+from [the github project packages](https://github.com/FBibonne/Properties-Logger/packages/2229078)
 
 2. The module module _Properties Logger_ logs its message with properties and their values
-at the info level : so its **log level must be at least INFO**. DEBUG (or TRACE) give (much) more
-informations.
+   at the info level : so its **log level must be at least INFO**. DEBUG (or TRACE) give (much) more
+   informations.
 
 ## Result
 
 You should see this kind of output in your log (in the console by default in a Spring Boot app) :
+
 ```text
 2024-06-25T12:01:00.858+02:00  INFO 42091 --- [           main] fr.insee.boot.PropertiesLogger           : 
 ================================================================================
@@ -75,15 +82,16 @@ lists the sources from wich properties keys are collected : only the property so
 which are enumerable and [which are not excluded](#excluded-properties-sources) are listed there
 
 The second part of the log message (after the separator `====` ) lists collected properties
-key which starts with [one element of the prefix list](#prefix-list-for-displayed-properties) 
+key which starts with [one element of the prefix list](#prefix-list-for-displayed-properties)
 and its value resolved by Spring Boot. The displayed value **is not necessarily** the one
 which is defined in the property source where Spring Boot encoutered the key, neither one
 of the values defined in other displayed property source but the real one that Spring Boot
-would provide to your application (for example in a `@Value` annotation) following [its 
+would provide to your application (for example in a `@Value` annotation) following [its
 property resolver algorithm](https://docs.spring.io/spring-boot/reference/features/external-config.html)
 
-For example, given the property key `spring.datasource.username`. If it is defined in the 
+For example, given the property key `spring.datasource.username`. If it is defined in the
 application.properties file with `user_dev` value :
+
 ```properties
 spring.datasource.username=user_dev
 ```
@@ -98,42 +106,43 @@ is not listed because by default the property keys in the system environment pro
 are not displayed.
 
 Values of [properties with secrets](#properties-with-hidden-values) are hidden when they are printed :
-`******` is displayed instead. For example `spring.datasource.password = ******`. To be hidden, the 
+`******` is displayed instead. For example `spring.datasource.password = ******`. To be hidden, the
 property key must contain one of the words from the list [properties with secrets](#properties-with-hidden-values).
 
 ## Configuration
 
-We describe here configurations which can be applied to the module _Properties Logger_ via 
+We describe here configurations which can be applied to the module _Properties Logger_ via
 properties prefixed by `properties.logger`. They are three of them:
+
 - [`properties.logger.sources-ignored`](#excluded-properties-sources)
 - [`properties.logger.prefix-for-properties`](#prefix-list-for-displayed-properties)
 - [`properties.logger.with-hidden-values`](#properties-with-hidden-values)
 
 ### Excluded properties sources
 
-| Related Property                    | Default value                        |
-|-------------------------------------|:-------------------------------------|
-| `properties.logger.sources-ignored` | systemProperties, systemEnvironment  |
+| Related Property                    | Default value                       |
+|-------------------------------------|:------------------------------------|
+| `properties.logger.sources-ignored` | systemProperties, systemEnvironment |
 
-At starting, Spring Boot can process many property sources and not all of them  provide values for
-the properties used in your application. Particularly the system properties (java properties which 
+At starting, Spring Boot can process many property sources and not all of them provide values for
+the properties used in your application. Particularly the system properties (java properties which
 can be read with `System#getProperty`) and the OS environment variables (can be read with `System#getenv`)
-contain many key-value pairs which you do not directly use in your application : displaying 
+contain many key-value pairs which you do not directly use in your application : displaying
 them make the log too much verbose. So you can exclude the properties key exclusively defined by these property
 sources listing them in the  `properties.logger.sources-ignored`.
 
 By default the system properties (`systemProperties`) and the environment variables(`systemEnvironment`)
-are excluded. You can exclude more properties source by adding their names to the list. 
+are excluded. You can exclude more properties source by adding their names to the list.
 
 > For example, to not not take into account property keys from :
 > 1. the file application.properties
 > 2. a file with a relative path ` ../secrets/secret.properties`
 > 3. the command line arguments
 > 4. the `properties` attribute of `@SpringBootTest` and others @*Test annotations,
-> you should set these values :
+     > you should set these values :
 
 ```properties
-properties.logger.sources-ignored= systemProperties, systemEnvironment,\
+properties.logger.sources-ignored=systemProperties, systemEnvironment,\
 [application.properties],\
 ../secrets/secret.properties,\
 commandLineArgs,\
@@ -144,29 +153,38 @@ Inlined\ Test\ Properties
 >
 > 2. at second line, for the the application.properties file,
 > 3. at third line for ../secrets/secret.properties file
-> 4. at fourth line for command ligne arguments
+> 4. at fourth line for command line arguments
 > 5. at fifth line for then properties attributes for tests
+
+**NB** :
+
+When you exclude a property source, you do not exclude property values of this source
+since if the property is present in an other source not excluded and if the value for
+this property is resolved to the value of the excluded source, the value of the excluded
+source will be displayed in logs. Furthermore, when you exclude a property source you
+do not exclude properties which are also listed at least in one another _not excluded_
+property source.
 
 ### Prefix list for displayed properties
 
-| Related Property                    | Default value                        |
-|-------------------------------------|:-------------------------------------|
-| `properties.logger.prefix-for-properties` | debug, trace, info, logging, spring, server, management, springdoc, properties  |
+| Related Property                          | Default value                                                                  |
+|:------------------------------------------|:-------------------------------------------------------------------------------|
+| `properties.logger.prefix-for-properties` | debug, trace, info, logging, spring, server, management, springdoc, properties |
 
-        for (String prefix : allowedPrefixForProperties) {
-            if (key.startsWith(prefix)) {
-                return true;
-            }
-        }
+Only the properties whose keys start with one of the prefix listed in `properties.logger.prefix-for-properties` will be
+displayed
+(if they ar also in a non excluded property source). If you set `properties.logger.prefix-for-properties` to empty, no
+property will be displayed. It is recommended to set the value of `properties.logger.prefix-for-properties` to the
+default
+plus the beginning of your company name to display the properties for your application.
 
 ### Properties with hidden values
 
+| Related Property                       | Default value                                |
+|----------------------------------------|:---------------------------------------------|
+| `properties.logger.with-hidden-values` | password, pwd, token, secret, credential, pw |
 
-| Related Property                    | Default value                        |
-|-------------------------------------|:-------------------------------------|
-| `properties.logger.with-hidden-values` | password, pwd, token, secret, credential, pw  |
-
-        if (propertiesWithHiddenValues.stream().anyMatch(key::contains)) {
-            return `******`
-        }
-        return environement.getProperty(key);
+When a property is displayed, there is a filter which avoid to leak secrets in logs : all properties whose key contains 
+one of the token in `properties.logger.with-hidden-values` will be displayed with the value `******` instead of the actual value.
+The default value of `properties.logger.with-hidden-values`  contains the most common tokens for secrets but you should 
+add the specific ones you may have in your application.
