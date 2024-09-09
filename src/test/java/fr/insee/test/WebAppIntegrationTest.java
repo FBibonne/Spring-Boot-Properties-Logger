@@ -34,4 +34,9 @@ class WebAppIntegrationTest {
                );
     }
 
+    @Test
+    void excludedPropertySourcesTest(){
+
+    }
+
 }
