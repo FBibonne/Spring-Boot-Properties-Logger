@@ -39,7 +39,7 @@ class ExcludedPropertySourcesTest {
                 + externalPropertiesPath.toAbsolutePath()+"]";
         Files.writeString(externalPropertiesPath, content);
 
-        System.setProperty("spring.config.import=", "file:" + externalPropertiesPath.toAbsolutePath());
+        System.setProperty("spring.config.import", "file:" + externalPropertiesPath.toAbsolutePath());
     }
 
     @DynamicPropertySource
