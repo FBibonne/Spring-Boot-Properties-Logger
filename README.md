@@ -23,7 +23,7 @@ Usage is simple : just add this dependency inside your pom.xml :
 <dependency>
     <groupId>fr.insee</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
