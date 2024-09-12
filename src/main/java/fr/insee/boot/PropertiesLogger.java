@@ -72,7 +72,7 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
     }
 
     private boolean isNotIgnored(PropertySource<?> propertySource, Set<String> ignoredPropertySources) {
-        if (ignoredPropertySources.contains(propertySource.getName())) {
+        if (ignoredPropertySources.stream().anyMatch(propertySource.getName()::contains)) {
             log.trace(() -> propertySource + " is listed to be ignored");
             return false;
         }

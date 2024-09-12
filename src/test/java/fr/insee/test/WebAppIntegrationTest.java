@@ -1,6 +1,7 @@
 package fr.insee.test;
 
 import fr.insee.boot.PropertiesLogger;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = WebAppIntegrationTest.class, properties = {
         "properties.logger.sources-ignored = systemEnvironment",
-        "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr"
+        "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr",
 })
 @Configuration
 class WebAppIntegrationTest {
@@ -30,8 +31,15 @@ class WebAppIntegrationTest {
                 properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr%n\
                 fr.insee.test = ok%n\
                 fr.insee.secret = ******%n\
+                fr.insee.shared = application.properties%n\
+                fr.insee.specific.applicationproperties = application.properties%n\
                 ================================================================================%n""").formatted()
                );
+    }
+
+    @AfterAll
+    static void clearLogStub(){
+        ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().setLength(0);
     }
 
 }
