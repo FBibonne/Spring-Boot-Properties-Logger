@@ -11,7 +11,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = IssueWithDynamicPropertySourceTest.class ,properties = {
-        //"spring.config.additional-location=classpath:spring/issue/additionalPropsInClasspath.properties"
+        //"spring.config.additional-location=classpath:spring/issue/application.properties"
 }
 )
 @Configuration
@@ -19,12 +19,12 @@ class IssueWithDynamicPropertySourceTest {
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.config.additional-location", () -> "classpath:spring/issue/additionalPropsInClasspath.properties");
+        registry.add("spring.config.additional-location", () -> "classpath:spring/issue/application.properties");
     }
 
     @Test
     void propertyFromAddtionalLocationShouldBeLoaded(@Autowired Environment environment) {
-        assertThat(environment.getProperty("spring.config.additional-location")).hasToString("classpath:spring/issue/additionalPropsInClasspath.properties");
+        assertThat(environment.getProperty("spring.config.additional-location")).hasToString("classpath:spring/issue/application.properties");
         assertThat(environment.getProperty("property.in.addtional.file")).hasToString("ok");
     }
 
