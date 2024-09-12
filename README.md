@@ -188,3 +188,21 @@ When a property is displayed, there is a filter which avoid to leak secrets in l
 one of the token in `properties.logger.with-hidden-values` will be displayed with the value `******` instead of the actual value.
 The default value of `properties.logger.with-hidden-values`  contains the most common tokens for secrets but you should 
 add the specific ones you may have in your application.
+
+
+## Warnings
+
+### Properties from `@DynamicPropertySource` methods will not be displayed
+
+The Properties-Logger library cannot access to the property source of `@DynamicPropertySource` methods because
+the properties logger library runs before the `@DynamicPropertySource` methods  are executed. Therefore, **neither the properties
+keys exclusively defined in `@DynamicPropertySource` methods, neither the values defined in this methods, whatever the 
+property key is, will be displayed** even if  `@DynamicPropertySource` methods property source is not excluded.
+
+`@DynamicPropertySource` methods are a specific mecanism dedicated to test which let you define or overrride properties values 
+very late so it is not in the scope of the Properties Logger library which aims to display properties at the earliest time 
+in the application lifecycle. It is strongly recommended to not define in other place properties from `@DynamicPropertySource` 
+methods. If you have no other choice (make sure you had a complete look to 
+[the numerous ways to override properties in Spring Boot](https://docs.spring.io/spring-boot/reference/features/external-config.html) )
+that defining `@DynamicPropertySource` methods to override properties in a test and you want to check the value of the 
+overrided property, consider logging it yourself or write an assertion in your test

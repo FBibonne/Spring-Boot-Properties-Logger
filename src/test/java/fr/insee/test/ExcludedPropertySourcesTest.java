@@ -15,12 +15,10 @@ import org.springframework.test.context.DynamicPropertySource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLOutput;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {
-        "properties.logger.sources-ignored= systemProperties, systemEnvironment,[application.properties],otherProps/additionalPropsInClasspath.properties,commandLineArgs,Inlined\\ Test\\ Properties",
         "fr.insee.shared = inlineTestProperties",
         "fr.insee.specific.inlineTestProperties = inlineTestProperties"},
         args = { "--fr.insee.shared=args", "--fr.insee.specific.args=args"}
@@ -32,13 +30,14 @@ class ExcludedPropertySourcesTest {
 
     @BeforeAll
     static void createTempPropertyFileInFileSystem() throws IOException {
-        System.out.println("#################### TEST AND FIX spring.config.additional-location does not work if declared in @DynamicPropertySource");
         externalPropertiesPath = Files.createTempFile("inFileSystem", ".properties");
-        Files.writeString(externalPropertiesPath, """
-        fr.insee.shared = inFileSystem
-        fr.insee.specific.inFileSystem = inFileSystem
-        fr.insee.sharedWithExternal = inFileSystem
-        """);
+        String content = """
+                fr.insee.shared = inFileSystem
+                fr.insee.specific.inFileSystem = inFileSystem
+                fr.insee.sharedWithExternal = inFileSystem
+                properties.logger.sources-ignored = systemProperties, systemEnvironment,application.properties,otherProps/additionalPropsInClasspath.properties,commandLineArgs,Inlined\\ Test\\ Properties,"""
+                + externalPropertiesPath.toAbsolutePath();
+        Files.writeString(externalPropertiesPath, content);
 
         System.setProperty("spring.config.additional-location", "file:" + externalPropertiesPath.toAbsolutePath());
     }
@@ -54,21 +53,35 @@ class ExcludedPropertySourcesTest {
     void contextLoad_shouldNotPrintExcludedPropertySources(@Autowired  Environment environment) {
 
         //GIVEN context and prop properties.logger.sources-ignored= systemProperties, systemEnvironment,[application.properties],otherProps/additionalPropsInClasspath.properties,commandLineArgs,Inlined\ Test\ Properties
-        // excluded @DynamicPropertySource
-        //not excluded : nonExcluded.properties, externalfile
+        //not excluded : nonExcluded.properties,
         //WHEN context loads
         //THEN
         String logOutput = ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString();
 
         System.out.println(logOutput);
 
-        assertThat(environment.getProperty("properties.logger.sources-ignored")).hasToString("systemProperties, systemEnvironment,[application.properties],otherProps/additionalPropsInClasspath.properties,commandLineArgs,Inlined Test Properties");
-        assertThat(logOutput).contains("fr.insee.shared = dynamicPropertySource")
+        assertThat(environment.getProperty("properties.logger.sources-ignored")).hasToString("systemProperties, systemEnvironment,[application.properties],otherProps/additionalPropsInClasspath.properties,commandLineArgs,Inlined Test Properties,"+ externalPropertiesPath.toAbsolutePath());
+        assertThat(environment.getProperty("fr.insee.shared")).hasToString("dynamicPropertySource");
+        assertThat(logOutput).contains("fr.insee.shared = inlineTestProperties")
                 .doesNotContain("fr.insee.specific.dynamicPropertySource")
                 .contains("fr.insee.specific.nonExcludedFile = nonExcludedFile")
                 .doesNotContain("fr.insee.sharedWithExternal = nonExcludedFile")
                 .contains("fr.insee.sharedWithExternal = inFileSystem")
-                .contains("fr.insee.specific.inFileSystem = inFileSystem");
+                .doesNotContain("fr.insee.specific.inFileSystem = inFileSystem")
+                .doesNotContain("fr.insee.specific.applicationproperties")
+                .doesNotContain("fr.insee.specific.additionalPropsInClasspath")
+                .doesNotContain("fr.insee.specific.args")
+                .doesNotContain("fr.insee.specific.inFileSystem")
+                .doesNotContain("fr.insee.specific.inlineTestProperties")
+                .doesNotContain("class path resource [application.properties]")
+                .doesNotContain("class path resource [otherProps/additionalPropsInClasspath.properties]")
+                .doesNotContain("- commandLineArgs")
+                .doesNotContain("Config resource 'file ["+externalPropertiesPath+"]'")
+                .doesNotContain("- Inlined Test Properties")
+                .doesNotContain("- systemProperties")
+                .doesNotContain("- systemEnvironment")
+                .contains("class path resource [nonExcludedFile.properties]")
+        ;
         assertThat(environment.getProperty("fr.insee.specific.inFileSystem")).hasToString("inFileSystem");
         assertThat(environment.getProperty("fr.insee.specific.applicationproperties")).hasToString("application.properties");
         assertThat(environment.getProperty("fr.insee.specific.additionalPropsInClasspath")).hasToString("additionalPropsInClasspath");
