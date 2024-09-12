@@ -93,6 +93,8 @@ class ExcludedPropertySourcesTest {
     @AfterAll
     static void deleteTempPropertyFileInFileSystem() throws IOException {
         Files.delete(externalPropertiesPath);
+        System.clearProperty("spring.config.import");
+        ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().setLength(0);
     }
 
 }

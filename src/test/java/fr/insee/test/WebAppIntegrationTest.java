@@ -1,10 +1,15 @@
 package fr.insee.test;
 
 import fr.insee.boot.PropertiesLogger;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,9 +39,9 @@ class WebAppIntegrationTest {
                );
     }
 
-    @Test
-    void excludedPropertySourcesTest(){
-
+    @AfterAll
+    static void clearLogStub(){
+        ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().setLength(0);
     }
 
 }
