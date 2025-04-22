@@ -1,4 +1,4 @@
-# Properties Logger
+# Spring Boot Properties Logger
 
 _Properties Logger_ is a module for Spring Boot 3+ apps which early logs properties
 detected by Spring Boot and their values resolved by Spring Boot.
