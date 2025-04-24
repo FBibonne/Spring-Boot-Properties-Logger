@@ -36,7 +36,7 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
         abstractEnvironment(environement).ifPresent(this::doLogProperties);
     }
 
-    private Optional<AbstractEnvironment> abstractEnvironment(Environment environement) {
+    private Optional<CustomAbstractEnvironment> abstractEnvironment(Environment environement) {
         if (environement instanceof AbstractEnvironment abstractEnvironment) {
             return Optional.of(abstractEnvironment);
         }
@@ -152,4 +152,19 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
     }
 
 
+    private static final class CustomAbstractEnvironment extends AbstractEnvironment implements ConfigurableEnvironment {
+        private final ConfigurableEnvironment delegate;
+
+        private CustomAbstractEnvironment(ConfigurableEnvironment delegate) {
+            super(delegate.getPropertySources());
+            this.delegate = delegate;
+            ((AbstractPropertyResolver)super.getPropertyResolver()).getPropertyAsRawString
+        }
+
+        implements static factory with type check
+
+        implements getRawProperty with `((AbstractPropertyResolver)super.getPropertyResolver()).getPropertyAsRawString`
+
+        check that `super(delegate.getPropertySources());` has the same behaviour as delegate
+    }
 }
