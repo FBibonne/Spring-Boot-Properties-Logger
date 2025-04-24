@@ -30,19 +30,16 @@ class ExternalPropertiesFilesIntegrationTest {
         assertThat(System.getProperty("unexisting")).isNull();
         assertThat(System.getenv("unexisting")).isNull();
         System.setProperty("existing", nonExcludedPath.toString());
-        assertThatCode(() -> {
-            contextRef.context=SpringApplication.run(VerySimpleSpringBootApplication.class, "--spring.config.location="+
-                    "optional:file:/${unexisting}/application.properties,"+
-                    "optional:file:/unexisting/path/to/property/file/application.properties,"+
-                    "optional:classpath:${unexisting:/otherProps}/application.properties,"+
-                    "optional:file:${existing}/application.properties," +
-                    "optional:file:${existing:"+ ignoredPath +"}/application.properties",
-                    "--properties.logger.disabled=true",
-                    "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,fr");
-        }).doesNotThrowAnyException();
+        assertThatCode(() -> contextRef.context=SpringApplication.run(VerySimpleSpringBootApplication.class, "--spring.config.location="+
+                "optional:file:/${unexisting}/application.properties,"+
+                "optional:file:/unexisting/path/to/property/file/application.properties,"+
+                "optional:classpath:${unexisting:/otherProps}/application.properties,"+
+                "optional:file:${existing}/application.properties," +
+                "optional:file:${existing:"+ ignoredPath +"}/application.properties",
+                "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,fr")).doesNotThrowAnyException();
         Environment environment = contextRef.context.getEnvironment();
         assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
-        assertThat(capturedOutput.toString()).contains("spring.config.location=optional:file:/${unexisting}/application.properties");
+        assertThat(capturedOutput.toString()).contains("spring.config.location = optional:file:/${unexisting}/application.properties");
         //otherProps/application.properties
         /*
          * fr.insee.shared = additionalPropsInClasspath

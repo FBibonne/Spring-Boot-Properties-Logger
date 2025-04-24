@@ -58,8 +58,6 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
 
         log.debug(() -> "Start logging properties with prefix " + allowedPrefixForProperties + " for all properties sources except " + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
 
-        //final boolean b = abstractEnvironment.
-
         var stringWithPropertiesToDisplay = new StringBuilder();
 
         abstractEnvironment.getPropertySources().stream()
