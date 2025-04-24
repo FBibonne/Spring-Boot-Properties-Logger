@@ -24,12 +24,15 @@ class WebAppIntegrationTest {
                 ================================================================================
                                         Values of properties from sources :
                 - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'%n\
+                - applicationInfo%n\
                 - Inlined Test Properties%n\
                 - systemProperties%n\
                                                      ====%n\
                 spring.jmx.enabled = false%n\
                 properties.logger.sources-ignored = systemEnvironment%n\
                 properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr%n\
+                spring.application.pid =\s""").formatted())
+                .contains(("""
                 fr.insee.test = ok%n\
                 fr.insee.secret = ******%n\
                 fr.insee.shared = application.properties%n\
