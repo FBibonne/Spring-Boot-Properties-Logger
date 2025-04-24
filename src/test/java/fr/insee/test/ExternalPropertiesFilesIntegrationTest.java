@@ -11,7 +11,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,10 +18,10 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 
 @ExtendWith(OutputCaptureExtension.class)
-public class ExternalPropertiesFilesIntegrationTest {
+class ExternalPropertiesFilesIntegrationTest {
 
     @Test
-    void startingSpringBootApplicationWithExternalOptionalPropertiesFilesAndUnexistingPlaceholder_shouldNotFail(CapturedOutput capturedOutput) throws URISyntaxException, IOException {
+    void startingSpringBootApplicationWithExternalOptionalPropertiesFilesAndUnexistingPlaceholder_shouldNotFail(CapturedOutput capturedOutput) throws IOException {
         final var contextRef = new Object(){
             ApplicationContext context;
         };
@@ -42,7 +41,8 @@ public class ExternalPropertiesFilesIntegrationTest {
                     "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,fr");
         }).doesNotThrowAnyException();
         Environment environment = contextRef.context.getEnvironment();
-        assertThat(environment.getProperty("spring.config.location")).isNotNull();
+        assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
+        assertThat(capturedOutput.toString()).contains("spring.config.location=optional:file:/${unexisting}/application.properties");
         //otherProps/application.properties
         /*
          * fr.insee.shared = additionalPropsInClasspath

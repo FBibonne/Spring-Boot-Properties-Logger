@@ -1,10 +1,10 @@
 package fr.insee.test;
 
-import fr.insee.boot.PropertiesLogger;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,12 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
         "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr",
 })
 @Configuration
+@ExtendWith(OutputCaptureExtension.class)
 class WebAppIntegrationTest {
 
     @Test
-    void contextLoads() {
-        assertThat(((Slf4jStub)LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString()).hasToString(("""
-                [INFO] %n\
+    void contextLoads(CapturedOutput output) {
+        assertThat(output.toString()).contains(("""
+                [main] INFO fr.insee.boot.PropertiesLogger - %n\
                 ================================================================================
                                         Values of properties from sources :
                 - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'%n\
@@ -35,11 +36,6 @@ class WebAppIntegrationTest {
                 fr.insee.specific.applicationproperties = application.properties%n\
                 ================================================================================%n""").formatted()
                );
-    }
-
-    @AfterAll
-    static void clearLogStub(){
-        ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().setLength(0);
     }
 
 }
