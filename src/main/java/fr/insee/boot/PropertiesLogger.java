@@ -6,6 +6,7 @@ import org.springframework.core.env.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -22,28 +23,51 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
     private static final String KEY_FOR_PROPS_WITH_HIDDEN_VALUES = "properties.logger.with-hidden-values";
     private static final String KEY_FOR_PREFIX_FOR_PROPERTIES = "properties.logger.prefix-for-properties";
     private static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
+    public static final String KEY_FOR_DISABLED = "properties.logger.disabled";
     public static final String MASK = "******";
 
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-        log.debug(() -> "Starting PropertiesLogger on ApplicationEnvironmentPreparedEvent");
         final Environment environement = event.getEnvironment();
+        if (loggingDisabled(environement)) {
+            log.debug(() -> "PropertiesLogger is disabled");
+            return;
+        }
+        abstractEnvironment(environement).ifPresent(this::doLogProperties);
+    }
+
+    private Optional<AbstractEnvironment> abstractEnvironment(Environment environement) {
+        if (environement instanceof AbstractEnvironment abstractEnvironment) {
+            return Optional.of(abstractEnvironment);
+        }
+        log.info(()->"Environment "+environement+" is not instance of AbstractEnvironment : PropertiesLogger WILL NOT LOG PROPERTIES");
+        return Optional.empty();
+    }
+
+    private boolean loggingDisabled(Environment environement) {
+        return environement.getProperty(KEY_FOR_DISABLED, Boolean.class, false);
+    }
+
+    public void doLogProperties(AbstractEnvironment abstractEnvironment) {
+        log.debug(() -> "Starting PropertiesLogger on ApplicationEnvironmentPreparedEvent");
         log.trace(() -> "Collecting properties to configure PropertiesLogger");
-        final Set<String> propertiesWithHiddenValues = getPropertyOrDefaultAndTrace(environement, KEY_FOR_PROPS_WITH_HIDDEN_VALUES, DEFAULT_PROPS_WITH_HIDDEN_VALUES);
-        final Set<String> allowedPrefixForProperties = getPropertyOrDefaultAndTrace(environement, KEY_FOR_PREFIX_FOR_PROPERTIES, DEFAULT_PREFIX_FOR_PROPERTIES);
-        final Set<String> ignoredPropertySources = getPropertyOrDefaultAndTrace(environement, KEY_FOR_SOURCES_IGNORED, DEFAULT_SOURCES_IGNORED);
+        final Set<String> propertiesWithHiddenValues = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PROPS_WITH_HIDDEN_VALUES, DEFAULT_PROPS_WITH_HIDDEN_VALUES);
+        final Set<String> allowedPrefixForProperties = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PREFIX_FOR_PROPERTIES, DEFAULT_PREFIX_FOR_PROPERTIES);
+        final Set<String> ignoredPropertySources = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_SOURCES_IGNORED, DEFAULT_SOURCES_IGNORED);
         final Set<String> propertySourceNames = new HashSet<>();
 
         log.debug(() -> "Start logging properties with prefix " + allowedPrefixForProperties + " for all properties sources except " + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
 
+        //final boolean b = abstractEnvironment.
+
         var stringWithPropertiesToDisplay = new StringBuilder();
 
-        ((AbstractEnvironment) environement).getPropertySources().stream()
+        abstractEnvironment.getPropertySources().stream()
                 .filter(source -> willBeProcessed(source, ignoredPropertySources))
                 .flatMap(source -> rememberPropertySourceNameThenFlatPropertiesNames(source, propertySourceNames))
                 .distinct()
                 .filter(key -> nonNullKeyWithPrefix(key, allowedPrefixForProperties))
-                .forEach(key -> resolveValueThenAppendToDisplay(key, stringWithPropertiesToDisplay, propertiesWithHiddenValues, environement));
+                .forEach(key -> resolveValueThenAppendToDisplay(key, stringWithPropertiesToDisplay, propertiesWithHiddenValues, abstractEnvironment));
 
         stringWithPropertiesToDisplay
                 .append(SEPARATION_LINE)
