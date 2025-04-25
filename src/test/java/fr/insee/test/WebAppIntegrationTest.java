@@ -20,7 +20,7 @@ class WebAppIntegrationTest {
     @Test
     void contextLoads(CapturedOutput output) {
         assertThat(output.toString()).contains(("""
-                [main] INFO fr.insee.boot.PropertiesLogger - %n\
+                main] fr.insee.boot.PropertiesLogger           : %n\
                 ================================================================================
                                         Values of properties from sources :
                 - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'%n\
