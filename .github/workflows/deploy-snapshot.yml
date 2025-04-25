@@ -21,10 +21,7 @@ jobs:
             # overrides the file ~/.m2/settings.xml with data to publish to maven pkg server with id github
             overwrite-settings: true
         - name: Build
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          run: |
-            mvn -B deploy
+          run: mvn install --no-transfer-progress
         - name: Get current version
           id: version
           run: echo "::set-output name=prop::$(mvn -f pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)"
