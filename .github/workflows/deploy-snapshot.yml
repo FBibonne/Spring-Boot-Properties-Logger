@@ -25,12 +25,13 @@ jobs:
           id: version
           run: echo "::set-output name=prop::$(mvn -f pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)"
         - run: echo ${{steps.version.outputs.prop}}
+        - run: mv target/boot-properties-logger-starter-${{steps.version.outputs.prop}}.jar target/boot-properties-logger-starter.jar
         - name: Create Release
           id: create_release
           uses: ncipollo/release-action@v1.16.0
           with:
             tag: v${{steps.version.outputs.prop}}
             commit: master
-            artifacts: target/boot-properties-logger-starter-${{steps.version.outputs.prop}}.jar
+            artifacts: target/boot-properties-logger-starter.jar
             artifactContentType: application/java-archive
             generateReleaseNotes: true
