@@ -1,12 +1,13 @@
 package fr.insee.test;
 
-import fr.insee.boot.PropertiesLogger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         args = { "--fr.insee.shared=args", "--fr.insee.specific.args=args","--spring.config.additional-location=classpath:/otherProps/,classpath:/nonExcluded/"}
 )
 @Configuration
+@ExtendWith(OutputCaptureExtension.class)
 class ExcludedPropertySourcesTest {
 
     static Path externalPropertiesPath;
@@ -50,15 +52,13 @@ class ExcludedPropertySourcesTest {
 
 
     @Test
-    void contextLoad_shouldNotPrintExcludedPropertySources(@Autowired  Environment environment) {
+    void contextLoad_shouldNotPrintExcludedPropertySources(@Autowired Environment environment, CapturedOutput output) {
 
         //GIVEN context and prop properties.logger.sources-ignored= systemProperties, systemEnvironment,[application.properties],otherProps/application.properties,commandLineArgs,Inlined\ Test\ Properties
         //not excluded : nonExcluded.properties,
         //WHEN context loads
         //THEN
-        String logOutput = ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().toString();
-
-        System.out.println(logOutput);
+        String logOutput = output.toString();
 
         assertThat(environment.getProperty("properties.logger.sources-ignored")).hasToString("systemProperties, systemEnvironment,[application.properties],[otherProps/application.properties],commandLineArgs,Inlined Test Properties,["+ externalPropertiesPath.toAbsolutePath()+"]");
         assertThat(environment.getProperty("fr.insee.shared")).hasToString("dynamicPropertySource");
@@ -94,7 +94,6 @@ class ExcludedPropertySourcesTest {
     static void deleteTempPropertyFileInFileSystem() throws IOException {
         Files.delete(externalPropertiesPath);
         System.clearProperty("spring.config.import");
-        ((Slf4jStub) LoggerFactory.getLogger(PropertiesLogger.class)).getStringBuilder().setLength(0);
     }
 
 }
