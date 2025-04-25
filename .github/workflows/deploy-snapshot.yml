@@ -27,7 +27,7 @@ jobs:
         - run: echo ${{steps.version.outputs.prop}}
         - name: Create Release
           id: create_release
-          uses: ncipollo/release-action@latest
+          uses: ncipollo/release-action@v1.16.0
           with:
             tag: v${{steps.version.outputs.prop}}
             commit: master
