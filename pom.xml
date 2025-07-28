@@ -7,12 +7,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.4.5</version>
+        <version>3.5.3</version>
     </parent>
 
     <groupId>fr.insee</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <packaging>jar</packaging>
 
     <properties>

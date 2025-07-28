@@ -1,71 +1,49 @@
 package fr.insee.boot;
 
-import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.*;
-import org.springframework.util.ReflectionUtils;
+import org.springframework.boot.ansi.AnsiPropertySource;
+import org.springframework.boot.env.RandomValuePropertySource;
+import org.springframework.boot.origin.OriginLookup;
+import org.springframework.core.env.EnumerablePropertySource;
+import org.springframework.core.env.PropertySource;
+import org.springframework.jndi.JndiPropertySource;
 
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-public record PropertiesLogger() implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
-
-    private static final LocalLogger log = new LocalLogger(PropertiesLogger.class);
+class PropertiesLogger {
 
     public static final String SEPARATION_LINE = "================================================================================";
-
-    private static final Set<String> DEFAULT_PROPS_WITH_HIDDEN_VALUES = Set.of("password", "pwd", "token", "secret", "credential", "pw");
-    private static final Set<String> DEFAULT_PREFIX_FOR_PROPERTIES = Set.of("debug", "trace", "info", "logging", "spring", "server", "management", "springdoc", "properties");
-    private static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
-    private static final boolean DEFAULT_PROPERTIES_LOGGER_DISABLED = false;
-
-    private static final String KEY_FOR_PROPS_WITH_HIDDEN_VALUES = "properties.logger.with-hidden-values";
-    private static final String KEY_FOR_PREFIX_FOR_PROPERTIES = "properties.logger.prefix-for-properties";
-    private static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
-    public static final String KEY_FOR_DISABLED = "properties.logger.disabled";
     public static final String MASK = "******";
+    private static final LocalLogger log = new LocalLogger(PropertiesLogger.class);
 
-    @Override
-    public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-        final Environment environment = event.getEnvironment();
-        if (loggingDisabled(environment)) {
-            log.debug(() -> "PropertiesLogger is disabled");
-            return;
-        }
-        abstractEnvironment(environment).ifPresent(this::doLogProperties);
+    final PropertiesWithHiddenValues propertiesWithHiddenValues;
+    final AllowedPrefixForProperties allowedPrefixForProperties;
+    final IgnoredPropertySources ignoredPropertySources;
+    final Set<String> propertySourceNames = new HashSet<>();
+    final StringBuilder stringWithPropertiesToDisplay = new StringBuilder();
+
+    UnaryOperator<String> originFinder = k->"";
+
+
+    PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources) {
+        this.propertiesWithHiddenValues = propertiesWithHiddenValues;
+        this.allowedPrefixForProperties = allowedPrefixForProperties;
+        this.ignoredPropertySources = ignoredPropertySources;
     }
 
-    private Optional<CustomAbstractEnvironment> abstractEnvironment(Environment environment) {
-        if (environment instanceof ConfigurableEnvironment configurableEnvironment) {
-            return Optional.of(new CustomAbstractEnvironment(configurableEnvironment));
-        }
-        log.info(()->"Environment "+environment+" is not instance of ConfigurableEnvironment : PropertiesLogger WILL NOT LOG PROPERTIES");
-        return Optional.empty();
-    }
-
-    private boolean loggingDisabled(Environment environment) {
-        return getPropertyOrDefaultAndTrace(environment, KEY_FOR_DISABLED, boolean.class, DEFAULT_PROPERTIES_LOGGER_DISABLED);
-    }
-
-    private void doLogProperties(CustomAbstractEnvironment abstractEnvironment) {
-        log.debug(() -> "Starting PropertiesLogger on ApplicationEnvironmentPreparedEvent");
-        log.trace(() -> "Collecting properties to configure PropertiesLogger");
-        final Set<String> propertiesWithHiddenValues = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PROPS_WITH_HIDDEN_VALUES, Set.class, DEFAULT_PROPS_WITH_HIDDEN_VALUES);
-        final Set<String> allowedPrefixForProperties = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PREFIX_FOR_PROPERTIES, Set.class, DEFAULT_PREFIX_FOR_PROPERTIES);
-        final Set<String> ignoredPropertySources = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_SOURCES_IGNORED, Set.class, DEFAULT_SOURCES_IGNORED);
-        final Set<String> propertySourceNames = new HashSet<>();
-
+    public void doLogProperties(final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
         log.debug(() -> "Start logging properties with prefix " + allowedPrefixForProperties + " for all properties sources except " + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
 
-        var stringWithPropertiesToDisplay = new StringBuilder();
-
         abstractEnvironment.getPropertySources().stream()
-                .filter(source -> willBeProcessed(source, ignoredPropertySources))
-                .flatMap(source -> rememberPropertySourceNameThenFlatPropertiesNames(source, propertySourceNames))
+                .mapMulti(this::asEnumerablePropertySourceIfHasToBeProcessed)
+                .flatMap(this::toPropertyNames)
                 .distinct()
-                .filter(key -> nonNullKeyWithPrefix(key, allowedPrefixForProperties))
-                .forEach(key -> resolveValueThenAppendToDisplay(key, stringWithPropertiesToDisplay, propertiesWithHiddenValues, abstractEnvironment));
+                .filter(this::nonNullKeyWithPrefix)
+                .forEach(key -> resolveValueThenAppendToDisplay(key, abstractEnvironment));
 
         stringWithPropertiesToDisplay
                 .append(SEPARATION_LINE)
@@ -82,18 +60,21 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
 
 
         log.info(stringWithPropertiesToDisplay::toString);
-
     }
 
     private void insertPropretySourceNamesOnePerLine(Set<String> propertySourceNames, StringBuilder stringWithPropertiesToDisplay) {
         propertySourceNames.forEach(name -> stringWithPropertiesToDisplay.insert(0, System.lineSeparator()).insert(0, name).insert(0, "- "));
     }
 
-    private boolean willBeProcessed(PropertySource<?> propertySource, Set<String> ignoredPropertySources) {
-        return isEnumerable(propertySource) && isNotIgnored(propertySource, ignoredPropertySources);
+    private void asEnumerablePropertySourceIfHasToBeProcessed(PropertySource<?> propertySource, Consumer<EnumerablePropertySource<?>> downstream) {
+        var mustBeProcessed = isEnumerable(propertySource) && isNotIgnored(propertySource);
+        if (mustBeProcessed) {
+            propertySourceNames.add(propertySource.getName());
+            downstream.accept((EnumerablePropertySource<?>) propertySource);
+        }
     }
 
-    private boolean isNotIgnored(PropertySource<?> propertySource, Set<String> ignoredPropertySources) {
+    private boolean isNotIgnored(PropertySource<?> propertySource) {
         if (ignoredPropertySources.stream().anyMatch(propertySource.getName()::contains)) {
             log.trace(() -> propertySource + " is listed to be ignored");
             return false;
@@ -101,46 +82,64 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
         return true;
     }
 
-    private void resolveValueThenAppendToDisplay(String key, StringBuilder stringWithPropertiesToDisplay, Set<String> propertiesWithHiddenValues, CustomAbstractEnvironment environement) {
+    private void resolveValueThenAppendToDisplay(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environement) {
         stringWithPropertiesToDisplay.append(key).append(" = ")
-                .append(resolveValueThenMaskItIfSecret(key, propertiesWithHiddenValues, environement))
+                .append(resolveValueThenMaskItIfSecret(key, environement))
+                .append(originFinder.apply(key))
                 .append(System.lineSeparator());
     }
 
-    private String resolveValueThenMaskItIfSecret(String key, Set<String> propertiesWithHiddenValues, CustomAbstractEnvironment environment) {
+    private String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
         if (propertiesWithHiddenValues.stream().anyMatch(key::contains)) {
             return MASK;
         }
         return environment.getPropertySafely(key);
     }
 
-    private Stream<String> rememberPropertySourceNameThenFlatPropertiesNames(PropertySource<?> propertySource, Set<String> propertySourceNames) {
-        String propertySourceName = propertySource.getName();
-        log.trace(() -> "Flat properties for " + propertySourceName);
-        propertySourceNames.add(propertySourceName);
-        return Arrays.stream(((EnumerablePropertySource<?>) propertySource).getPropertyNames());
+    private Stream<String> toPropertyNames(EnumerablePropertySource<?> propertySource) {
+        log.trace(() -> "Flat properties for " + propertySource.getName());
+        return Arrays.stream(propertySource.getPropertyNames());
     }
 
     private boolean isEnumerable(PropertySource<?> propertySource) {
-        if (!(propertySource instanceof EnumerablePropertySource)) {
-            log.debug(() -> propertySource + " is not EnumerablePropertySource : unable to list");
+        if (propertySource instanceof AnsiPropertySource ansiPropertySource) {
+            log.warn(()->"Processing of AnsiPropertySource "+ ansiPropertySource+" not yet implemented : properties exclusively from this property source will be ignored");
             return false;
         }
-        return true;
-    }
-
-    private <T> T getPropertyOrDefaultAndTrace(PropertyResolver environment, String key, Class<T> clazz, T defaultValue) {
-        try {
-            T result = environment.getProperty(key, clazz, defaultValue);
-            log.trace(() -> key + " -> " + result);
-            return result;
-        } catch (Exception e) {
-            log.info(()-> "Error while getting property " + key + " : " + e.getMessage()+System.lineSeparator()+"Will use default value");
-            return defaultValue;
+        if (propertySource instanceof PropertySource.StubPropertySource) {
+            log.debug(() -> propertySource + " is a stub property source : it does not contain properties : will be ignored");
+            return false;
         }
+        if (propertySource instanceof RandomValuePropertySource) {
+            log.debug(()-> propertySource + " is a RandomValuePropertySource : will be ignored");
+            return false;
+        }
+        if (propertySource instanceof JndiPropertySource){
+            log.warn(()-> propertySource + " is a JndiPropertySource : it is not enumerable : will be ignored");
+            return false;
+        }
+        if (propertySource instanceof EnumerablePropertySource<?>){
+            log.trace(() -> propertySource + " is a EnumerablePropertySource : will be used to find keys");
+            return true;
+        }
+        if (propertySource instanceof OriginLookup<?>) {
+            if ("org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource".equals(propertySource.getClass().getCanonicalName())){
+                log.debug(()-> propertySource + " will be used as the originFinder but will be ignored as a property source");
+                final OriginLookup<String> originLookup = (OriginLookup<String>) propertySource;
+                this.originFinder=key->{
+                    var origin=originLookup.getOrigin(key);
+                    return origin==null?"":" "+ origin;
+                };
+            }else{
+                log.debug(()-> propertySource + " will be ignored as a property source and also as OriginLookup");
+            }
+            return false;
+        }
+        log.warn(()-> propertySource + " is unknown : will be ignored");
+        return false;
     }
 
-    private boolean nonNullKeyWithPrefix(String key, Set<String> allowedPrefixForProperties) {
+    private boolean nonNullKeyWithPrefix(String key) {
         log.trace(() -> "Check if property " + key + " can be displayed");
         if (key == null) {
             return false;
@@ -154,104 +153,4 @@ public record PropertiesLogger() implements ApplicationListener<ApplicationEnvir
         return false;
     }
 
-
-    private static final class CustomAbstractEnvironment implements PropertyResolver {
-        private static final Method getPropertyResolver = resolveMethod(AbstractEnvironment.class, "getPropertyResolver");
-        private static final Method getPropertyAsRawString = resolveMethod(AbstractPropertyResolver.class, "getPropertyAsRawString", String.class);
-        
-        private final ConfigurableEnvironment delegate;
-        private AbstractPropertyResolver propertyResolver;
-
-
-        private static Method resolveMethod(Class<?> targetType, String methodName, Class<?>... parameterTypes) {
-            Method method = Objects.requireNonNull(ReflectionUtils.findMethod(targetType, methodName, parameterTypes));
-            ReflectionUtils.makeAccessible(method);
-            return method;
-        }
-
-        private CustomAbstractEnvironment(ConfigurableEnvironment delegate) {
-            this.delegate = delegate;
-        }
-
-        private AbstractPropertyResolver invokeGetPropertyResolver(ConfigurableEnvironment delegate) {
-            if (delegate instanceof AbstractEnvironment abstractEnvironment) {
-                var abstractPropertyResolverCondidate = ReflectionUtils.invokeMethod(getPropertyResolver, abstractEnvironment);
-                if (abstractPropertyResolverCondidate instanceof AbstractPropertyResolver abstractPropertyResolver) {
-                    return abstractPropertyResolver;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public boolean containsProperty(String key) {
-            return delegate.containsProperty(key);
-        }
-
-        @Override
-        public String getProperty(String key) {
-            return delegate.getProperty(key);
-        }
-
-        @Override
-        public String getProperty(String key, String defaultValue) {
-            return delegate.getProperty(key, defaultValue);
-        }
-
-        @Override
-        public <T> T getProperty(String key, Class<T> targetType) {
-            return delegate.getProperty(key, targetType);
-        }
-
-        @Override
-        public <T> T getProperty(String key, Class<T> targetType, T defaultValue) {
-            return delegate.getProperty(key, targetType, defaultValue);
-        }
-
-        @Override
-        public String getRequiredProperty(String key) throws IllegalStateException {
-            return delegate.getRequiredProperty(key);
-        }
-
-        @Override
-        public <T> T getRequiredProperty(String key, Class<T> targetType) throws IllegalStateException {
-            return delegate.getRequiredProperty(key, targetType);
-        }
-
-        @Override
-        public String resolvePlaceholders(String text) {
-            return delegate.resolvePlaceholders(text);
-        }
-
-        @Override
-        public String resolveRequiredPlaceholders(String text) throws IllegalArgumentException {
-            return delegate.resolveRequiredPlaceholders(text);
-        }
-
-        public MutablePropertySources getPropertySources() {
-            return delegate.getPropertySources();
-        }
-
-        public String getPropertySafely(String key) {
-            try{
-                return delegate.getProperty(key);
-            }catch (IllegalArgumentException e) {
-                // IllegalArgumentException thrown when unresolved placeholder occurs
-                return getPropertyAsRawString(key);
-            } catch (Exception e) {
-                return "Error while getting property " + key + " : " + e.getMessage();
-            }
-        }
-
-        private String getPropertyAsRawString(String key) {
-            return invokeGetPropertyAsRawString(key);
-        }
-
-        private String invokeGetPropertyAsRawString(String key) {
-                  if (this.propertyResolver == null) {
-                this.propertyResolver = invokeGetPropertyResolver(this.delegate);
-            }
-            return (String) ReflectionUtils.invokeMethod(getPropertyAsRawString, this.propertyResolver, key);
-        }
-    }
 }

@@ -11,7 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = WebAppIntegrationTest.class, properties = {
         "properties.logger.sources-ignored = systemEnvironment",
-        "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr",
+        //"properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr",
+        "logging.level.fr.insee.boot=trace"
 })
 @Configuration
 @ExtendWith(OutputCaptureExtension.class)
@@ -31,6 +32,7 @@ class WebAppIntegrationTest {
                 spring.jmx.enabled = false%n\
                 properties.logger.sources-ignored = systemEnvironment%n\
                 properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr%n\
+                logging.level.fr.insee.boot = trace
                 spring.application.pid =\s""").formatted())
                 .contains(("""
                 fr.insee.test = ok%n\
