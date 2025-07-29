@@ -128,7 +128,7 @@ class PropertiesLogger {
                 final OriginLookup<String> originLookup = (OriginLookup<String>) propertySource;
                 this.originFinder=key->{
                     var origin=originLookup.getOrigin(key);
-                    return origin==null?"":" "+ origin;
+                    return origin==null?"":" ### FROM "+ origin+" ###";
                 };
             }else{
                 log.debug(()-> propertySource + " will be ignored as a property source and also as OriginLookup");
