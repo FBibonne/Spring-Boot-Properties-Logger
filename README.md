@@ -49,7 +49,7 @@ from [the github project packages](https://github.com/FBibonne/Properties-Logger
 You should see this kind of output in your log (in the console by default in a Spring Boot app) :
 
 ```text
-2024-06-25T12:01:00.858+02:00  INFO 42091 --- [           main] fr.insee.boot.PropertiesLogger           : 
+2024-06-25T12:01:00.858+02:00  INFO 42091 --- [           main] fr.insee.boot.EnvironmentPreparedEventForPropertiesLogging           : 
 ================================================================================
                         Values of properties from sources :
 - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'

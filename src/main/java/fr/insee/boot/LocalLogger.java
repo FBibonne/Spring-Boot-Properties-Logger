@@ -23,4 +23,7 @@ public record LocalLogger(Logger logger) {
         logger.atInfo().log(message);
     }
 
+    public void warn(Supplier<String> message) {
+        logger.atWarn().log(message);
+    }
 }
