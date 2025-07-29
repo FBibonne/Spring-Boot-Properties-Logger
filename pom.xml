@@ -10,7 +10,7 @@
         <version>3.5.3</version>
     </parent>
 
-    <groupId>fr.insee</groupId>
+    <groupId>io.github.fbibonne</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
     <version>1.3.0-alpha</version>
     <packaging>jar</packaging>
@@ -24,7 +24,6 @@
     <contributors>
         <contributor>
             <name>Fabrice Bibonne</name>
-            <organization>Insee</organization>
             <url>https://github.com/Fbibonne</url>
         </contributor>
     </contributors>

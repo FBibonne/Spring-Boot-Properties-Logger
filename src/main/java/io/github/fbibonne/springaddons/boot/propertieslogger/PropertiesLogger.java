@@ -1,4 +1,4 @@
-package fr.insee.boot;
+package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.springframework.boot.ansi.AnsiPropertySource;
 import org.springframework.boot.env.RandomValuePropertySource;

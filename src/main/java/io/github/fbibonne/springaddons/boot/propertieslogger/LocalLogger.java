@@ -1,11 +1,11 @@
-package fr.insee.boot;
+package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.Supplier;
 
-public record LocalLogger(Logger logger) {
+record LocalLogger(Logger logger) {
 
     public LocalLogger(Class<?> clazz) {
         this(LoggerFactory.getLogger(clazz));
