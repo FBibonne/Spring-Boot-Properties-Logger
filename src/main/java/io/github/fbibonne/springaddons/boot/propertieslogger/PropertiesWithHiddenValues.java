@@ -1,9 +1,9 @@
-package fr.insee.boot;
+package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import java.util.Set;
 import java.util.stream.Stream;
 
-public record PropertiesWithHiddenValues(Set<String> properties) {
+record PropertiesWithHiddenValues(Set<String> properties) {
     public Stream<String> stream() {
         return properties.stream();
     }

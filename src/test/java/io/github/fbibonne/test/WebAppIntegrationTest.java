@@ -1,4 +1,4 @@
-package fr.insee.test;
+package io.github.fbibonne.test;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,8 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = WebAppIntegrationTest.class, properties = {
         "properties.logger.sources-ignored = systemEnvironment",
-        "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr",
-        "logging.level.fr.insee.boot=trace"
+        "properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, io, from",
+        "logging.level.io.github.fbibonne.boot=trace"
 }, args = "--spring.config.additional-location=classpath:additional-file.properties,file:src/test/resources/otherProps/application.properties")
 @Configuration
 @ExtendWith(OutputCaptureExtension.class)
@@ -25,7 +25,7 @@ class WebAppIntegrationTest {
     @Test
     void contextLoads(CapturedOutput output) {
         assertThat(output.toString()).contains(("""
-                        main] fr.insee.boot.PropertiesLogger           : %n\
+                        main] io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger           : %n\
                         ================================================================================
                                                 Values of properties from sources :
                         - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'%n\
@@ -35,14 +35,14 @@ class WebAppIntegrationTest {
                                                              ====%n\
                         spring.jmx.enabled = false%n\
                         properties.logger.sources-ignored = systemEnvironment%n\
-                        properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, fr%n\
-                        logging.level.fr.insee.boot = trace
+                        properties.logger.prefix-for-properties = info, logging, spring, server, management, properties, springdoc, io%n\
+                        logging.level.io.github.fbibonne.boot = trace
                         spring.application.pid =\s""").formatted())
                 .contains(("""
-                        fr.insee.test = ok%n\
-                        fr.insee.secret = ******%n\
-                        fr.insee.shared = application.properties%n\
-                        fr.insee.specific.applicationproperties = application.properties%n\
+                        io.github.fbibonne.test = ok%n\
+                        io.github.fbibonne.secret = ******%n\
+                        io.github.fbibonne.shared = application.properties%n\
+                        io.github.fbibonne.specific.applicationproperties = application.properties%n\
                         ================================================================================%n""").formatted()
                 );
     }

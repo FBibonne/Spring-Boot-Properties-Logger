@@ -1,4 +1,4 @@
-package fr.insee.test;
+package io.github.fbibonne.test;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,28 +36,28 @@ class ExternalPropertiesFilesIntegrationTest {
                 "optional:classpath:${unexisting:/otherProps}/application.properties,"+
                 "optional:file:${existing}/application.properties," +
                 "optional:file:${existing:"+ ignoredPath +"}/application.properties",
-                "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,fr")).doesNotThrowAnyException();
+                "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,io")).doesNotThrowAnyException();
         Environment environment = contextRef.context.getEnvironment();
         assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
         assertThat(capturedOutput.toString()).contains("spring.config.location = optional:file:/${unexisting}/application.properties");
         //otherProps/application.properties
         /*
-         * fr.insee.shared = additionalPropsInClasspath
-         * fr.insee.specific.additionalPropsInClasspath = additionalPropsInClasspath
+         * io.github.fbibonne.shared = additionalPropsInClasspath
+         * io.github.fbibonne.specific.additionalPropsInClasspath = additionalPropsInClasspath
          */
-        assertThat(environment.getProperty("fr.insee.specific.additionalPropsInClasspath")).hasToString("additionalPropsInClasspath");
-        assertThat(capturedOutput.toString()).contains("fr.insee.specific.additionalPropsInClasspath = additionalPropsInClasspath");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.additionalPropsInClasspath")).hasToString("additionalPropsInClasspath");
+        assertThat(capturedOutput.toString()).contains("io.github.fbibonne.specific.additionalPropsInClasspath = additionalPropsInClasspath");
         // /${existing}/application.properties => nonExcluded/application.properties
         /*
-         * fr.insee.shared = nonExcludedFile
-         * fr.insee.specific.nonExcludedFile = nonExcludedFile
-         * fr.insee.sharedWithExternal = nonExcludedFile
+         * io.github.fbibonne.shared = nonExcludedFile
+         * io.github.fbibonne.specific.nonExcludedFile = nonExcludedFile
+         * io.github.fbibonne.sharedWithExternal = nonExcludedFile
          */
-        assertThat(environment.getProperty("fr.insee.specific.nonExcludedFile")).hasToString("nonExcludedFile");
-        assertThat(capturedOutput.toString()).contains("fr.insee.specific.nonExcludedFile = nonExcludedFile");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.nonExcludedFile")).hasToString("nonExcludedFile");
+        assertThat(capturedOutput.toString()).contains("io.github.fbibonne.specific.nonExcludedFile = nonExcludedFile");
         // /${existing:"+ ignoredPath +"}/application.properties => not /ignored/application.properties
-        assertThat(environment.getProperty("fr.insee.specific.ignoredFile")).isNull();
-        assertThat(capturedOutput.toString()).doesNotContain("fr.insee.specific.ignoredFile");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.ignoredFile")).isNull();
+        assertThat(capturedOutput.toString()).doesNotContain("io.github.fbibonne.specific.ignoredFile");
     }
 
     @Configuration

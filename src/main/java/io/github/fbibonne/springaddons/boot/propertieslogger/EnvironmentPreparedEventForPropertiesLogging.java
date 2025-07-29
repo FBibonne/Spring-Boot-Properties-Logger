@@ -1,4 +1,4 @@
-package fr.insee.boot;
+package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationListener;

@@ -1,4 +1,4 @@
-package fr.insee.test;
+package io.github.fbibonne.test;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -20,9 +20,9 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {
-        "fr.insee.shared = inlineTestProperties",
-        "fr.insee.specific.inlineTestProperties = inlineTestProperties"},
-        args = { "--fr.insee.shared=args", "--fr.insee.specific.args=args","--spring.config.additional-location=classpath:/otherProps/,classpath:/nonExcluded/"}
+        "io.github.fbibonne.shared = inlineTestProperties",
+        "io.github.fbibonne.specific.inlineTestProperties = inlineTestProperties"},
+        args = { "--io.github.fbibonne.shared=args", "--io.github.fbibonne.specific.args=args","--spring.config.additional-location=classpath:/otherProps/,classpath:/nonExcluded/"}
 )
 @Configuration
 @ExtendWith(OutputCaptureExtension.class)
@@ -34,9 +34,9 @@ class ExcludedPropertySourcesTest {
     static void createTempPropertyFileInFileSystem() throws IOException {
         externalPropertiesPath = Files.createTempFile("inFileSystem", ".properties");
         String content = """
-                fr.insee.shared = inFileSystem
-                fr.insee.specific.inFileSystem = inFileSystem
-                fr.insee.sharedWithExternal = inFileSystem
+                io.github.fbibonne.shared = inFileSystem
+                io.github.fbibonne.specific.inFileSystem = inFileSystem
+                io.github.fbibonne.sharedWithExternal = inFileSystem
                 properties.logger.sources-ignored = systemProperties, systemEnvironment,[application.properties],[otherProps/application.properties],commandLineArgs,Inlined\\ Test\\ Properties,["""
                 + externalPropertiesPath.toAbsolutePath()+"]";
         Files.writeString(externalPropertiesPath, content);
@@ -46,8 +46,8 @@ class ExcludedPropertySourcesTest {
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
-        registry.add("fr.insee.shared", ()->"dynamicPropertySource");
-        registry.add("fr.insee.specific.dynamicPropertySource",()->"dynamicPropertySource");
+        registry.add("io.github.fbibonne.shared", ()->"dynamicPropertySource");
+        registry.add("io.github.fbibonne.specific.dynamicPropertySource",()->"dynamicPropertySource");
     }
 
 
@@ -61,19 +61,19 @@ class ExcludedPropertySourcesTest {
         String logOutput = output.toString();
 
         assertThat(environment.getProperty("properties.logger.sources-ignored")).hasToString("systemProperties, systemEnvironment,[application.properties],[otherProps/application.properties],commandLineArgs,Inlined Test Properties,["+ externalPropertiesPath.toAbsolutePath()+"]");
-        assertThat(environment.getProperty("fr.insee.shared")).hasToString("dynamicPropertySource");
-        assertThat(environment.getProperty("fr.insee.specific.nonExcludedFile")).hasToString("nonExcludedFile");
-        assertThat(logOutput).contains("fr.insee.shared = inlineTestProperties")
-                .doesNotContain("fr.insee.specific.dynamicPropertySource")
-                .contains("fr.insee.specific.nonExcludedFile = nonExcludedFile")
-                .doesNotContain("fr.insee.sharedWithExternal = nonExcludedFile")
-                .contains("fr.insee.sharedWithExternal = inFileSystem")
-                .doesNotContain("fr.insee.specific.inFileSystem = inFileSystem")
-                .doesNotContain("fr.insee.specific.applicationproperties")
-                .doesNotContain("fr.insee.specific.additionalPropsInClasspath")
-                .doesNotContain("fr.insee.specific.args")
-                .doesNotContain("fr.insee.specific.inFileSystem")
-                .doesNotContain("fr.insee.specific.inlineTestProperties")
+        assertThat(environment.getProperty("io.github.fbibonne.shared")).hasToString("dynamicPropertySource");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.nonExcludedFile")).hasToString("nonExcludedFile");
+        assertThat(logOutput).contains("io.github.fbibonne.shared = inlineTestProperties")
+                .doesNotContain("io.github.fbibonne.specific.dynamicPropertySource")
+                .contains("io.github.fbibonne.specific.nonExcludedFile = nonExcludedFile")
+                .doesNotContain("io.github.fbibonne.sharedWithExternal = nonExcludedFile")
+                .contains("io.github.fbibonne.sharedWithExternal = inFileSystem")
+                .doesNotContain("io.github.fbibonne.specific.inFileSystem = inFileSystem")
+                .doesNotContain("io.github.fbibonne.specific.applicationproperties")
+                .doesNotContain("io.github.fbibonne.specific.additionalPropsInClasspath")
+                .doesNotContain("io.github.fbibonne.specific.args")
+                .doesNotContain("io.github.fbibonne.specific.inFileSystem")
+                .doesNotContain("io.github.fbibonne.specific.inlineTestProperties")
                 .doesNotContain("class path resource [application.properties]")
                 .doesNotContain("class path resource [otherProps/application.properties]")
                 .doesNotContain("- commandLineArgs")
@@ -83,10 +83,10 @@ class ExcludedPropertySourcesTest {
                 .doesNotContain("- systemEnvironment")
                 .doesNotContain("class path resource [application.properties]")
         ;
-        assertThat(environment.getProperty("fr.insee.specific.inFileSystem")).hasToString("inFileSystem");
-        assertThat(environment.getProperty("fr.insee.specific.applicationproperties")).hasToString("application.properties");
-        assertThat(environment.getProperty("fr.insee.specific.additionalPropsInClasspath")).hasToString("additionalPropsInClasspath");
-        assertThat(environment.getProperty("fr.insee.specific.args")).hasToString("args");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.inFileSystem")).hasToString("inFileSystem");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.applicationproperties")).hasToString("application.properties");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.additionalPropsInClasspath")).hasToString("additionalPropsInClasspath");
+        assertThat(environment.getProperty("io.github.fbibonne.specific.args")).hasToString("args");
 
     }
 

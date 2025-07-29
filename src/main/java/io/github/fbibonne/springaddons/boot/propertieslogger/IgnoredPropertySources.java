@@ -1,9 +1,9 @@
-package fr.insee.boot;
+package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import java.util.Set;
 import java.util.stream.Stream;
 
-public record IgnoredPropertySources(Set<String> sources) {
+record IgnoredPropertySources(Set<String> sources) {
     public Stream<String> stream() {
         return sources.stream();
     }
