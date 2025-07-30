@@ -36,7 +36,8 @@ class ExternalPropertiesFilesIntegrationTest {
                 "optional:classpath:${unexisting:/otherProps}/application.properties,"+
                 "optional:file:${existing}/application.properties," +
                 "optional:file:${existing:"+ ignoredPath +"}/application.properties",
-                "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,io")).doesNotThrowAnyException();
+                "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,io",
+                "--spring.main.web-application-type=none")).doesNotThrowAnyException();
         Environment environment = contextRef.context.getEnvironment();
         assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
         assertThat(capturedOutput.toString()).contains("spring.config.location = optional:file:/${unexisting}/application.properties");
