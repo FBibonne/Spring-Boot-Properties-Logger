@@ -43,6 +43,7 @@ class PropertiesLogger {
                 .flatMap(this::toPropertyNames)
                 .distinct()
                 .filter(this::nonNullKeyWithPrefix)
+                .sorted()
                 .forEach(key -> resolveValueThenAppendToDisplay(key, abstractEnvironment));
 
         stringWithPropertiesToDisplay
@@ -144,10 +145,8 @@ class PropertiesLogger {
         if (key == null) {
             return false;
         }
-        for (String prefix : allowedPrefixForProperties) {
-            if (key.startsWith(prefix)) {
-                return true;
-            }
+        if (allowedPrefixForProperties.anyMatch(key::startsWith)) {
+            return true;
         }
         log.debug(() -> key + " doesn't start with a logable prefix");
         return false;
