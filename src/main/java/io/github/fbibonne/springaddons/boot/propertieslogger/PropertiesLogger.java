@@ -120,7 +120,7 @@ class PropertiesLogger {
             return false;
         }
         if (propertySource instanceof EnumerablePropertySource<?>){
-            log.trace(() -> propertySource + " is a EnumerablePropertySource : will be used to find keys");
+            log.trace(() -> propertySource + " is a EnumerablePropertySource : is a candidate to find keys");
             return true;
         }
         if (propertySource instanceof OriginLookup<?>) {

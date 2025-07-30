@@ -16,7 +16,7 @@ record LocalLogger(Logger logger) {
     }
 
     public void trace(Supplier<String> message) {
-        logger.atDebug().log(message);
+        logger.atTrace().log(message);
     }
 
     public void info(Supplier<String> message) {
