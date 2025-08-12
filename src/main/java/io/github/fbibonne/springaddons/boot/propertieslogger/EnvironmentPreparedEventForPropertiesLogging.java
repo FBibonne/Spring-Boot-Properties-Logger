@@ -10,6 +10,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Spring ApplicationListener which triggers on {@link ApplicationEnvironmentPreparedEvent} to start properties logging process.
+ * If the logging is enabled (with property {@code properties.logger.disabled} at {@code false} (which is default value) ) and the
+ * environment associated with the applicationEnvironmentPreparedEvent is an {@link ConfigurableEnvironment}, then the listener
+ * will log properties using provided configuration. The responsibility of this class is only to trigger the process and collect the
+ * configuration for logging properties (properties starting with {@code properties.logger}) in the environment. It delegates the
+ * logging process to an instance of {@link PropertiesLogger}
+ */
 public record EnvironmentPreparedEventForPropertiesLogging() implements ApplicationListener<ApplicationEnvironmentPreparedEvent> {
 
     private static final LocalLogger log = new LocalLogger(EnvironmentPreparedEventForPropertiesLogging.class);

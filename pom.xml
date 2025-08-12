@@ -21,12 +21,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
-    <contributors>
-        <contributor>
+    <name>Spring Boot Properties Logger</name>
+
+    <developers>
+        <developer>
             <name>Fabrice Bibonne</name>
             <url>https://github.com/Fbibonne</url>
-        </contributor>
-    </contributors>
+        </developer>
+    </developers>
 
     <issueManagement>
         <url>https://github.com/FBibonne/Properties-Logger/issues</url>
@@ -37,10 +39,20 @@
         and their values resolved by Spring Boot.
     </description>
 
-    <url>https://github.com/FBibonne/Properties-Logger?tab=readme-ov-file#readme</url>
+    <url>https://github.com/FBibonne/Properties-Logger</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
 
     <scm>
         <developerConnection>scm:git:https://github.com/FBibonne/Properties-Logger.git</developerConnection>
+        <connection>scm:git:git://github.com/FBibonne/Properties-Logger.git</connection>
+        <url>https://github.com/FBibonne/Properties-Logger/tree/master</url>
     </scm>
 
     <distributionManagement>
@@ -90,6 +102,40 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <parameters>true</parameters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.10.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.2.8</version>
+                <configuration>
+                    <signer>bc</signer>
                 </configuration>
             </plugin>
         </plugins>
