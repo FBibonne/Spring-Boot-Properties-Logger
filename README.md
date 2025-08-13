@@ -23,26 +23,15 @@ Usage is simple : just add this dependency inside your pom.xml :
 <dependency>
     <groupId>io.github.fbibonne</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>1.1.0</version>
+    <version>1.4.0</version>
 </dependency>
 ```
 
 NB :
 
-1. the lib is not deployed on maven central for the moment so you must install
-   it locally before using it :
-
-```shell
-$ git clone https://github.com/FBibonne/Properties-Logger.git --depth=1 --branch=master
-$ mvn install -f Properties-Logger/pom.xml
-```
-
-Now ou can also download it
-from [the github project packages](https://github.com/FBibonne/Properties-Logger/packages/2229078)
-
-2. The module module _Properties Logger_ logs its message with properties and their values
-   at the info level : so its **log level must be at least INFO**. DEBUG (or TRACE) give (much) more
-   informations.
+    The module module _Properties Logger_ logs its message with properties and their values
+    at the info level : so its **log level must be at least INFO**. DEBUG (or TRACE) give (much) more
+    informations.
 
 ## Result
 
