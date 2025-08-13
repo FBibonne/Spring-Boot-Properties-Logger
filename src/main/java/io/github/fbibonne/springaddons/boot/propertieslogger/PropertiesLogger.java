@@ -14,6 +14,12 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
+/**
+ * Class doing the real stuff for logging properties. The collect of properties to log, their value and the logging is done
+ * inside the {@link this#doLogProperties(EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment)} method.
+ * The state of the class stores {@link PropertySource} found, and a reference to an operator providing the origin of a property
+ * which is found while scanning propertySources
+ */
 class PropertiesLogger {
 
     public static final String SEPARATION_LINE = "================================================================================";
@@ -35,6 +41,22 @@ class PropertiesLogger {
         this.ignoredPropertySources = ignoredPropertySources;
     }
 
+    /**
+     * This method :
+     * <ol>
+     *     <li>lists all propertySources of the environment and exclude all those which cannot be processed (see method {@link this#isEnumerable(PropertySource)}
+     *     or are listed to be ignored (see property {@code properties.logger.sources-ignored}</li>
+     *     <li>for each propertySource not excluded, list all property keys then exclude {@code null} keys and non-allowed prefixed ones (see property {@code properties.logger.prefix-for-properties}</li>
+     *     <li>order distinct keys with alphabetical order (natural order of {@link String}</li>
+     *     <li>for each key, compute an expression {@code key = value ### FROM value_origin ###}  where {@code value} is the value of the key resolved against
+     *     the environment (or masked if key is listed in property {@code properties.logger.with-hidden-values}) and {@code value_origin} is the
+     *     propertySource which contains the value to which the key is resolved (if field {@link this#originFinder} can resolve it)</li>
+     *     <li>log the list of used propertySources to find keys, the ordered list of properties and their values and origin when available</li>
+     * </ol>
+     *
+     * @param abstractEnvironment : the environment of the application wrapped as an {@link io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment}
+     *                            to safely resolve properties with unknown placeholders
+     */
     public void doLogProperties(final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
         log.debug(() -> "Start logging properties with prefix " + allowedPrefixForProperties + " for all properties sources except " + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
 
@@ -102,6 +124,16 @@ class PropertiesLogger {
         return Arrays.stream(propertySource.getPropertyNames());
     }
 
+    /**
+     * Method which filter propertySource which can be processed to find properties to log.
+     * propertySource which can be processed are a subtype of {@link EnumerablePropertySource} : if not method log a
+     * debug message or a warning message for cases not implemented yet (AnsiPropertySource and JndiPropertySource). If
+     * propertySource is of type {@link org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource},
+     * it will be referenced to resolve origin of property values later (see {@link this#originFinder}. If propertySource
+     * has an unknown type, a warning is logged.
+     * @param propertySource : instance of {@link PropertySource} which is checked for being processed or not.
+     * @return true if the propertySource can be processed.
+     */
     private boolean isEnumerable(PropertySource<?> propertySource) {
         if (propertySource instanceof AnsiPropertySource ansiPropertySource) {
             log.warn(()->"Processing of AnsiPropertySource "+ ansiPropertySource+" not yet implemented : properties exclusively from this property source will be ignored");

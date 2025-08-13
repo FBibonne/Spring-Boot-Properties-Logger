@@ -4,7 +4,7 @@ on:
   pull_request
 
 jobs:
-    build:
+    check_pr:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
@@ -15,6 +15,6 @@ jobs:
             distribution: 'temurin'
             # overrides the file ~/.m2/settings.xml with data to publish to maven pkg server with id github
             overwrite-settings: true
-        - name: Build
+        - name: Verify
           run: |
             mvn -B verify
