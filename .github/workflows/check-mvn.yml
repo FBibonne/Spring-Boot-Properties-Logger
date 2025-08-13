@@ -1,7 +1,8 @@
-name: 'Build running test'
+name: 'try gpg sign'
 
 on:
-  pull_request
+  push:
+   branches: prepare-central-publish
 
 jobs:
     check_pr:
@@ -15,6 +16,7 @@ jobs:
             distribution: 'temurin'
             # overrides the file ~/.m2/settings.xml with data to publish to maven pkg server with id github
             overwrite-settings: true
-        - name: Verify
+        - name: Test gpg
           run: |
-            mvn -B verify
+            mvn -B clean package gpg:sign
+            ls target
