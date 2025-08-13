@@ -17,6 +17,9 @@ jobs:
             # overrides the file ~/.m2/settings.xml with data to publish to maven pkg server with id github
             overwrite-settings: true
         - name: Test gpg
+          env:
+            MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+            MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_KEY }}
           run: |
             echo $MAVEN_GPG_TEST
             echo ${#MAVEN_GPG_PASSPHRASE}
