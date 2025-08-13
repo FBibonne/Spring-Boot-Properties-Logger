@@ -28,7 +28,7 @@ jobs:
             MAVEN_GPG_KEY: ${{ secrets.MAVEN_GPG_KEY }}
             MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
             MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-          run: mvn install gpg:sign --no-transfer-progress
+          run: mvn install gpg:sign deploy --no-transfer-progress
         - name: Get current version
           id: version
           run: echo "::set-output name=prop::$(mvn -f pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)"
