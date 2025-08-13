@@ -18,5 +18,8 @@ jobs:
             overwrite-settings: true
         - name: Test gpg
           run: |
+            echo $MAVEN_GPG_TEST
+            echo ${#MAVEN_GPG_PASSPHRASE}
+            echo ${#MAVEN_GPG_KEY}
             mvn -B clean package gpg:sign
             ls target
