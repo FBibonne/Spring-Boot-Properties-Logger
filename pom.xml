@@ -155,6 +155,7 @@
                 <configuration>
                     <publishingServerId>central</publishingServerId>
                     <deploymentName>Properties-Logger</deploymentName>
+                    <autoPublish>true</autoPublish>
                 </configuration>
             </plugin>
         </plugins>
