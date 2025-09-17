@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -113,10 +114,36 @@ class PropertiesLogger {
     }
 
     private String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
-        if (propertiesWithHiddenValues.stream().anyMatch(key::contains)) {
+        if (propertiesWithHiddenValues.stream().anyMatch(isValueContainedIgnoringCaseIn(key))) {
             return MASK;
         }
         return environment.getPropertySafely(key);
+    }
+
+    /**
+     * Implementation of a String#containsIgnoreCase based the algorithm of String#contains
+     * but using String#equalsIgnoreCase to test equality
+     * @param container the string which is supposed to contain the argument passed to the predicate.
+     *                  Must be not null
+     * @return a predicate such as <code>container::containsIgnoreCase</code>
+     * (if String#containsIgnoreCase would exist)
+     */
+    Predicate<? super String> isValueContainedIgnoringCaseIn(String container) {
+        return value -> {
+            if (value==null){
+                return false;
+            }
+            if (value.isEmpty()){
+                return true;
+            }
+            int valueLength = value.length();
+            for(int i = 0; i <= container.length()- valueLength; i++) {
+                if (container.substring(i, i+valueLength).equalsIgnoreCase(value)){
+                    return true;
+                }
+            }
+            return false;
+        };
     }
 
     private Stream<String> toPropertyNames(EnumerablePropertySource<?> propertySource) {
