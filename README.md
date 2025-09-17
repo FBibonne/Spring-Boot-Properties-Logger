@@ -23,7 +23,7 @@ Usage is simple : just add this dependency inside your pom.xml :
 <dependency>
     <groupId>io.github.fbibonne</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 
