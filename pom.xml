@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>3.5.5</version>
+        <version>4.0.0-M2</version>
     </parent>
 
     <groupId>io.github.fbibonne</groupId>
@@ -16,6 +16,7 @@
     <packaging>jar</packaging>
 
     <properties>
+        <jspecify.version>1.0.0</jspecify.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -69,6 +70,11 @@
 
 
     <dependencies>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>${jspecify.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot</artifactId>

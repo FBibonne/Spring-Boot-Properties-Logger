@@ -65,7 +65,7 @@ class PropertiesLogger {
                 .mapMulti(this::asEnumerablePropertySourceIfHasToBeProcessed)
                 .flatMap(this::toPropertyNames)
                 .distinct()
-                .filter(this::nonNullKeyWithPrefix)
+                .filter(this::keyWithAllowedPrefix)
                 .sorted()
                 .forEach(key -> resolveValueThenAppendToDisplay(key, abstractEnvironment));
 
@@ -199,11 +199,8 @@ class PropertiesLogger {
         return false;
     }
 
-    private boolean nonNullKeyWithPrefix(String key) {
+    private boolean keyWithAllowedPrefix(String key) {
         log.trace(() -> "Check if property " + key + " can be displayed");
-        if (key == null) {
-            return false;
-        }
         if (allowedPrefixForProperties.anyMatch(key::startsWith)) {
             return true;
         }
