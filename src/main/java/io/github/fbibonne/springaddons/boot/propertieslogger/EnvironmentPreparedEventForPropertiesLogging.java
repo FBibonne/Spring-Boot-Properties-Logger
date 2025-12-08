@@ -1,5 +1,6 @@
 package io.github.fbibonne.springaddons.boot.propertieslogger;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.*;
@@ -91,6 +92,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         private static final Method getPropertyAsRawString = resolveMethod(AbstractPropertyResolver.class, "getPropertyAsRawString", String.class);
         
         private final ConfigurableEnvironment delegate;
+        @Nullable
         private AbstractPropertyResolver propertyResolver;
 
 
@@ -104,6 +106,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             this.delegate = delegate;
         }
 
+        @Nullable
         private AbstractPropertyResolver invokeGetPropertyResolver(ConfigurableEnvironment delegate) {
             if (delegate instanceof AbstractEnvironment abstractEnvironment) {
                 var abstractPropertyResolverCondidate = ReflectionUtils.invokeMethod(getPropertyResolver, abstractEnvironment);
@@ -120,7 +123,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         }
 
         @Override
-        public String getProperty(String key) {
+        public @Nullable String getProperty(String key) {
             return delegate.getProperty(key);
         }
 
@@ -163,6 +166,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             return delegate.getPropertySources();
         }
 
+        @Nullable
         public String getPropertySafely(String key) {
             try{
                 return delegate.getProperty(key);
@@ -174,10 +178,12 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             }
         }
 
+        @Nullable
         private String getPropertyAsRawString(String key) {
             return invokeGetPropertyAsRawString(key);
         }
 
+        @Nullable
         private String invokeGetPropertyAsRawString(String key) {
                   if (this.propertyResolver == null) {
                 this.propertyResolver = invokeGetPropertyResolver(this.delegate);
