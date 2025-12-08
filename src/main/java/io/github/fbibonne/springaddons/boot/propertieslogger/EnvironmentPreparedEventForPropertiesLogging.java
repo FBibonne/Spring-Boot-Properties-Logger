@@ -66,14 +66,24 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
     }
 
     private <T> T getPropertyOrDefaultAndTrace(PropertyResolver environment, String key, Class<T> clazz, T defaultValue) {
+        T result;
         try {
-            T result = environment.getProperty(key, clazz, defaultValue);
-            log.trace(() -> key + " -> " + result);
-            return result;
-        } catch (Exception e) {
-            log.info(()-> "Error while getting property " + key + " : " + e.getMessage()+System.lineSeparator()+"Will use default value");
-            return defaultValue;
+            result = getPropertyOrDefaultAndTraceThrowingException(environment, key, clazz, defaultValue);
+        } catch (RuntimeException e) {
+            logExceptionWhenGettingProperty(key, e);
+            result= defaultValue;
         }
+        return result;
+    }
+
+    private static void logExceptionWhenGettingProperty(String key, RuntimeException e) {
+        log.info(()-> "Error while getting property " + key + " : " + e.getMessage()+System.lineSeparator()+"Will use default value");
+    }
+
+    private static <T>  T getPropertyOrDefaultAndTraceThrowingException(PropertyResolver environment, String key, Class<T> clazz, T defaultValue) throws RuntimeException{
+        T result = environment.getProperty(key, clazz, defaultValue);
+        log.trace(() -> key + " -> " + result);
+        return result;
     }
 
     static final class CustomAbstractEnvironment implements PropertyResolver {
