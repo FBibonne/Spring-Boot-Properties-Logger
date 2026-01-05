@@ -1,5 +1,6 @@
 package io.github.fbibonne.springaddons.boot.propertieslogger;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.ansi.AnsiPropertySource;
 import org.springframework.boot.env.RandomValuePropertySource;
 import org.springframework.boot.origin.OriginLookup;
@@ -91,7 +92,8 @@ class PropertiesLogger {
     }
 
     private void asEnumerablePropertySourceIfHasToBeProcessed(PropertySource<?> propertySource, Consumer<EnumerablePropertySource<?>> downstream) {
-        var mustBeProcessed = isEnumerable(propertySource) && isNotIgnored(propertySource);
+        PropertySourceType propertySourceType = PropertySourceType.of(propertySource);
+        var mustBeProcessed = propertySourceType.isEnumerable() && isNotIgnored(propertySource);
         if (mustBeProcessed) {
             propertySourceNames.add(propertySource.getName());
             downstream.accept((EnumerablePropertySource<?>) propertySource);
@@ -113,7 +115,7 @@ class PropertiesLogger {
                 .append(System.lineSeparator());
     }
 
-    private String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
+    private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
         if (propertiesWithHiddenValues.stream().anyMatch(isValueContainedIgnoringCaseIn(key))) {
             return MASK;
         }
@@ -162,41 +164,8 @@ class PropertiesLogger {
      * @return true if the propertySource can be processed.
      */
     private boolean isEnumerable(PropertySource<?> propertySource) {
-        if (propertySource instanceof AnsiPropertySource ansiPropertySource) {
-            log.warn(()->"Processing of AnsiPropertySource "+ ansiPropertySource+" not yet implemented : properties exclusively from this property source will be ignored");
-            return false;
-        }
-        if (propertySource instanceof PropertySource.StubPropertySource) {
-            log.debug(() -> propertySource + " is a stub property source : it does not contain properties : will be ignored");
-            return false;
-        }
-        if (propertySource instanceof RandomValuePropertySource) {
-            log.debug(()-> propertySource + " is a RandomValuePropertySource : will be ignored");
-            return false;
-        }
-        if (propertySource instanceof JndiPropertySource){
-            log.warn(()-> propertySource + " is a JndiPropertySource : it is not enumerable : will be ignored");
-            return false;
-        }
-        if (propertySource instanceof EnumerablePropertySource<?>){
-            log.trace(() -> propertySource + " is a EnumerablePropertySource : is a candidate to find keys");
-            return true;
-        }
-        if (propertySource instanceof OriginLookup<?>) {
-            if ("org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource".equals(propertySource.getClass().getCanonicalName())){
-                log.debug(()-> propertySource + " will be used as the originFinder but will be ignored as a property source");
-                final OriginLookup<String> originLookup = (OriginLookup<String>) propertySource;
-                this.originFinder=key->{
-                    var origin=originLookup.getOrigin(key);
-                    return origin==null?"":" ### FROM "+ origin+" ###";
-                };
-            }else{
-                log.debug(()-> propertySource + " will be ignored as a property source and also as OriginLookup");
-            }
-            return false;
-        }
-        log.warn(()-> propertySource + " is unknown : will be ignored");
-        return false;
+
+
     }
 
     private boolean keyWithAllowedPrefix(String key) {
