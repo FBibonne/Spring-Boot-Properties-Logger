@@ -1,7 +1,6 @@
 package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.boot.origin.Origin;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 
@@ -26,6 +25,7 @@ class PropertiesLogger {
     final AllowedPrefixForProperties allowedPrefixForProperties;
     final IgnoredPropertySources ignoredPropertySources;
     final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment;
+    final OriginFinder originFinder;
 
 
     PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
@@ -33,6 +33,7 @@ class PropertiesLogger {
         this.allowedPrefixForProperties = allowedPrefixForProperties;
         this.ignoredPropertySources = ignoredPropertySources;
         this.abstractEnvironment = abstractEnvironment;
+        this.originFinder = new OriginFinder(abstractEnvironment.getPropertySources());
     }
 
     /**
@@ -143,7 +144,12 @@ class PropertiesLogger {
     }
 
     private String toDisplayedLine(String key) {
-        return key + " = " + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment);
+        return key + " = " + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment)
+                + this.originFinder.findOriginFor(key).map(PropertiesLogger::originAsLine).orElse("");
+    }
+
+    private static String originAsLine(String origin) {
+        return " ### " + origin + " ###";
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
