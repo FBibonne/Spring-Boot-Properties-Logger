@@ -2,15 +2,10 @@ package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.boot.origin.Origin;
-import org.springframework.boot.origin.OriginLookup;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,8 +27,6 @@ class PropertiesLogger {
     final IgnoredPropertySources ignoredPropertySources;
     final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment;
 
-    UnaryOperator<String> originFinder = k -> "";
-
 
     PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
         this.propertiesWithHiddenValues = propertiesWithHiddenValues;
@@ -52,16 +45,14 @@ class PropertiesLogger {
      *           <li>debug message is logged if the propertySource is ignored</li>
      *           <li>warn message is logged if the propertySource is a {@link org.springframework.boot.ansi.AnsiPropertySource} (whose processing is not implmented).
      *           in such case, it will be ignored</li>
-     *           <li>propertySource of type <code>org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource</code>
-     *           won't be processed but will be used to resolve origin of property values later (see {@link this#originFinder}</li>
+
      *           <li>If propertySource has an unknown type, a warning is logged</li>
      *       </ul>
      *     </li>
      *     <li>for each propertySource not excluded, list all property keys then exclude {@code null} keys and non-allowed prefixed ones (see property {@code properties.logger.prefix-for-properties}</li>
      *     <li>order distinct keys with alphabetical order (natural order of {@link String}</li>
      *     <li>for each key, compute an expression {@code key = value ### FROM value_origin ###}  where {@code value} is the value of the key resolved against
-     *     the environment ({@link PropertiesLogger#abstractEnvironment}) or masked if key is listed in property {@code properties.logger.with-hidden-values}. And {@code value_origin} is the
-     *     propertySource which contains the value to which the key is resolved (if field {@link this#originFinder} can resolve it)</li>
+     *     the environment ({@link PropertiesLogger#abstractEnvironment}) or masked if key is listed in property {@code properties.logger.with-hidden-values}. </li>
      *     <li>log the list of used propertySources to find keys, the ordered list of properties and their values and origin when available</li>
      * </ol>
      *
@@ -115,27 +106,8 @@ class PropertiesLogger {
                     .ifPresent(enumerablePropertySource ->
                             propertyNamesBySource.put(enumerablePropertySource.getName(), enumerablePropertySource.getPropertyNames())
                     );
-            processOriginFinder(propertySource, propertySourceType);
         }
         return propertyNamesBySource;
-    }
-
-    private void processOriginFinder(PropertySource<?> propertySource, PropertySourceType propertySourceType) {
-        if (propertySourceType.isOriginFinder()) {
-            final OriginLookup<String> originLookup = (OriginLookup<String>) propertySource;
-            this.originFinder = asOriginFinder(originLookup);
-        }
-    }
-
-    private static UnaryOperator<String> asOriginFinder(OriginLookup<String> originLookup) {
-        return key -> {
-            var origin = originLookup.getOrigin(key);
-            return originAsLine(origin);
-        };
-    }
-
-    private static String originAsLine(@Nullable Origin origin) {
-        return origin == null ? "" : " ### FROM " + origin + " ###";
     }
 
     private void debugStarting() {
@@ -171,7 +143,7 @@ class PropertiesLogger {
     }
 
     private String toDisplayedLine(String key) {
-        return key + " = " + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment) + originFinder.apply(key);
+        return key + " = " + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment);
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
