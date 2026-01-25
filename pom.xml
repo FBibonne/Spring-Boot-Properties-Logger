@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
-        <version>4.0.0</version>
+        <version>4.0.2</version>
     </parent>
 
     <groupId>io.github.fbibonne</groupId>
@@ -15,6 +15,11 @@
     <version>1.6.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <!-- If you can't get dependabot, find updates with :
+    ```
+    mvn -ntp org.codehaus.mojo:versions-maven-plugin:2.21.0:display-property-updates
+    mvn -ntp org.codehaus.mojo:versions-maven-plugin:2.21.0:display-parent-updates
+    ``` -->
     <properties>
         <jspecify.version>1.0.0</jspecify.version>
         <maven.compiler.source>17</maven.compiler.source>

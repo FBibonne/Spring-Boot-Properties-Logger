@@ -33,12 +33,12 @@ class WebAppIntegrationTest {
                         main] i.g.f.s.b.p.PropertiesLogger             : %n\
                         ================================================================================
                                                 Values of properties from sources :
+                        - Config resource 'class path resource [additional-file.properties]' via location 'classpath:additional-file.properties'%n\
                         - Config resource 'class path resource [application.properties]' via location 'optional:classpath:/'%n\
                         - Config resource 'file [src/test/resources/otherProps/application.properties]' via location 'file:src/test/resources/otherProps/application.properties'%n\
-                        - applicationInfo%n\
-                        - Config resource 'class path resource [additional-file.properties]' via location 'classpath:additional-file.properties'%n\
-                        - commandLineArgs%n\
                         - Inlined Test Properties%n\
+                        - applicationInfo%n\
+                        - commandLineArgs%n\
                         - systemProperties%n\
                                                              ====%n\
                         from.system.properties = true ### FROM "from.system.properties" from property source "systemProperties" ###

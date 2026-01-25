@@ -25,12 +25,12 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
 
     private static final Set<String> DEFAULT_PROPS_WITH_HIDDEN_VALUES = Set.of("password", "pwd", "token", "secret", "credential", "pw");
     private static final Set<String> DEFAULT_PREFIX_FOR_PROPERTIES = Set.of("debug", "trace", "info", "logging", "spring", "server", "management", "springdoc", "properties");
-    private static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+    public static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
     private static final boolean DEFAULT_PROPERTIES_LOGGER_DISABLED = false;
 
     private static final String KEY_FOR_PROPS_WITH_HIDDEN_VALUES = "properties.logger.with-hidden-values";
     private static final String KEY_FOR_PREFIX_FOR_PROPERTIES = "properties.logger.prefix-for-properties";
-    private static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
+    public static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
     public static final String KEY_FOR_DISABLED = "properties.logger.disabled";
 
     @Override
@@ -62,8 +62,8 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         final AllowedPrefixForProperties allowedPrefixForProperties = new AllowedPrefixForProperties(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PREFIX_FOR_PROPERTIES, Set.class, DEFAULT_PREFIX_FOR_PROPERTIES));
         final IgnoredPropertySources ignoredPropertySources = new IgnoredPropertySources(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_SOURCES_IGNORED,  Set.class, DEFAULT_SOURCES_IGNORED));
 
-        PropertiesLogger propertiesLogger = new PropertiesLogger(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources);
-        propertiesLogger.doLogProperties(abstractEnvironment);
+        PropertiesLogger propertiesLogger = new PropertiesLogger(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources, abstractEnvironment);
+        propertiesLogger.doLogProperties();
     }
 
     private <T> T getPropertyOrDefaultAndTrace(PropertyResolver environment, String key, Class<T> clazz, T defaultValue) {

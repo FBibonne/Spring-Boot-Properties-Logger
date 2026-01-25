@@ -7,73 +7,111 @@ import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 import org.springframework.jndi.JndiPropertySource;
 
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 public enum PropertySourceType {
-    ANSI_PROPERTY_SOURCE,
-    STUB_PROPERTY_SOURCE, RANDOM_VALUE_PROPRERTY_SOURCE, JDNI_PROPERTY_SOURCE_TYPE, ENUMERABLE_PROPERTY_SOURCE,
-    ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE, UNKNOWN;
+    ANSI_PROPERTY_SOURCE("AnsiPropertySource"),
+    STUB_PROPERTY_SOURCE("StubPropertySource"), RANDOM_VALUE_PROPRERTY_SOURCE("RandomValuePropertySource"),
+    JDNI_PROPERTY_SOURCE_TYPE("JndiPropertySource"),
+    ENUMERABLE_PROPERTY_SOURCE("EnumerablePropertySource"),
+    ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE("OriginLookup[with OriginProvider]"), SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE("OriginLookup"), UNKNOWN("unknown type");
+
+    private final String className;
+
+    PropertySourceType(String className) {
+        this.className = className;
+    }
 
     private static final LocalLogger log = new LocalLogger(PropertySourceType.class);
 
     public static PropertySourceType of(PropertySource<?> propertySource) {
-        PropertySourceType propertySourceType;
-        if (propertySource instanceof AnsiPropertySource) {
-            propertySourceType = ANSI_PROPERTY_SOURCE;
-        } else if (propertySource instanceof PropertySource.StubPropertySource) {
-            propertySourceType = STUB_PROPERTY_SOURCE;
-        } else if (propertySource instanceof RandomValuePropertySource) {
-            propertySourceType = RANDOM_VALUE_PROPRERTY_SOURCE;
-        } else if (propertySource instanceof JndiPropertySource){
-            propertySourceType = JDNI_PROPERTY_SOURCE_TYPE;
-        } else if (propertySource instanceof EnumerablePropertySource<?>){
-            propertySourceType = ENUMERABLE_PROPERTY_SOURCE;
-        } else if (propertySource instanceof OriginLookup<?>) {
-            propertySourceType = ofOriginLookup((OriginLookup<?>) propertySource);
-        } else {
-            propertySourceType = UNKNOWN;
-        }
+        PropertySourceType propertySourceType = isEnumerable(propertySource) ? ENUMERABLE_PROPERTY_SOURCE : ofNonEnumerablePropertySource(propertySource);
         propertySourceType.log(propertySource);
         return propertySourceType;
     }
 
-    private static PropertySourceType ofOriginLookup(OriginLookup<?> originLookupPropertySource) {
-        if ("org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource".equals(originLookupPropertySource.getClass().getCanonicalName())){
-            return ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE;
+    private static PropertySourceType ofNonEnumerablePropertySource(PropertySource<?> propertySource) {
+        return propertySource instanceof OriginLookup<?> ? 
+                ofOriginLookupPropertySource(propertySource) : 
+                ofOtherPropertySource(propertySource);
+    }
+
+    private static PropertySourceType ofOtherPropertySource(PropertySource<?> propertySource) {
+        return isAnsiPropertySource(propertySource) ? ANSI_PROPERTY_SOURCE : ofIgnoredPropertySource(propertySource);
+    }
+
+    private static PropertySourceType ofIgnoredPropertySource(PropertySource<?> propertySource) {
+        PropertySourceType propertySourceType;
+        if (propertySource instanceof PropertySource.StubPropertySource) {
+            propertySourceType = STUB_PROPERTY_SOURCE;
+        } else if (propertySource instanceof RandomValuePropertySource) {
+            propertySourceType = RANDOM_VALUE_PROPRERTY_SOURCE;
+        } else if (propertySource instanceof JndiPropertySource) {
+            propertySourceType = JDNI_PROPERTY_SOURCE_TYPE;
+        } else {
+            propertySourceType = UNKNOWN;
         }
-        return SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE;
+        return propertySourceType;
+    }
+
+    private static boolean isAnsiPropertySource(PropertySource<?> propertySource) {
+        return propertySource instanceof AnsiPropertySource;
+    }
+
+    private static PropertySourceType ofOriginLookupPropertySource(PropertySource<?> propertySource) {
+        return isOriginFinder((OriginLookup<?>) propertySource) ? ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE
+                : SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE;
+    }
+
+    private static boolean isEnumerable(PropertySource<?> propertySource) {
+        return propertySource instanceof EnumerablePropertySource<?>;
+    }
+
+    private static boolean isOriginFinder(OriginLookup<?> originLookupPropertySource) {
+        return "org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource".equals(originLookupPropertySource.getClass().getCanonicalName());
     }
 
     private void log(PropertySource<?> propertySource) {
-        switch (this){
-            case ANSI_PROPERTY_SOURCE -> log.warn(()->"Processing of AnsiPropertySource "+ propertySource +" not yet implemented : properties exclusively from this property source will be ignored");
-            case STUB_PROPERTY_SOURCE -> log.debug(() -> propertySource + " is a stub property source : it does not contain properties : will be ignored");
-            case RANDOM_VALUE_PROPRERTY_SOURCE -> log.debug(()-> propertySource + " is a RandomValuePropertySource : will be ignored");
-            case JDNI_PROPERTY_SOURCE_TYPE -> log.warn(()-> propertySource + " is a JndiPropertySource : it is not enumerable : will be ignored");
-            case ENUMERABLE_PROPERTY_SOURCE -> log.trace(() -> propertySource + " is a EnumerablePropertySource : is a candidate to find keys");
-            case ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE -> log.debug(()-> propertySource + " will be used as the originFinder but will be ignored as a property source");
-            case SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE -> log.debug(()-> propertySource + " will be ignored as a property source and also as OriginLookup");
-            case UNKNOWN -> log.warn(()-> propertySource + " is unknown : will be ignored");
-            }
-        }
+        withLogLevel().accept(() -> logMessage(propertySource));
     }
 
-    /*
-                this.originFinder=key->{
-                var origin=originLookup.getOrigin(key);
-                return origin==null?"":" ### FROM "+ origin+" ###";
-            };
-     */
-    public boolean isOriginFinder(){
-        return switch (this){
+    private String logMessage(PropertySource<?> propertySource) {
+        return switch (this) {
+            case ANSI_PROPERTY_SOURCE ->
+                    "Processing of AnsiPropertySource " + propertySource + " not yet implemented : properties exclusively from this property source will be ignored";
+            case STUB_PROPERTY_SOURCE ->
+                    propertySource + " is a stub property source : it does not contain properties : will be ignored";
+            case RANDOM_VALUE_PROPRERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE, JDNI_PROPERTY_SOURCE_TYPE,
+                 UNKNOWN -> propertySource + " is a " + this.className + " : it is not enumerable : will be ignored";
+            case ENUMERABLE_PROPERTY_SOURCE ->
+                    propertySource + " is a EnumerablePropertySource : is a candidate to find keys";
+            case ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE ->
+                    propertySource + " will be used as the originFinder but will be ignored as a property source";
+        };
+    }
+
+    private Consumer<Supplier<String>> withLogLevel() {
+        return switch (this) {
+            case ANSI_PROPERTY_SOURCE, JDNI_PROPERTY_SOURCE_TYPE, UNKNOWN -> log::warn;
+            case STUB_PROPERTY_SOURCE, RANDOM_VALUE_PROPRERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE,
+                 ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE -> log::debug;
+            case ENUMERABLE_PROPERTY_SOURCE -> log::trace;
+        };
+    }
+
+    public boolean isOriginFinder() {
+        return switch (this) {
             case ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE -> true;
             case ANSI_PROPERTY_SOURCE, STUB_PROPERTY_SOURCE, ENUMERABLE_PROPERTY_SOURCE, JDNI_PROPERTY_SOURCE_TYPE,
-                 RANDOM_VALUE_PROPRERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE, -> false;
+                 RANDOM_VALUE_PROPRERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE, UNKNOWN -> false;
         };
     }
 
     public boolean isEnumerable() {
-        return switch (this){
+        return switch (this) {
             case ANSI_PROPERTY_SOURCE, STUB_PROPERTY_SOURCE, RANDOM_VALUE_PROPRERTY_SOURCE, JDNI_PROPERTY_SOURCE_TYPE,
-                 ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE -> false;
+                 ORIGIN_FINDER_ORIGIN_LOOKUP_PROPERTY_SOURCE, SIMPLE_ORIGIN_LOOKUP_PROPERTY_SOURCE, UNKNOWN -> false;
             case ENUMERABLE_PROPERTY_SOURCE -> true;
         };
     }
