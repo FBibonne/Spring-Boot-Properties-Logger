@@ -102,8 +102,7 @@ class PropertiesLogger {
     private Map<String, String[]> propertyNamesBySourceFromEnvironment() {
         Map<String, String[]> propertyNamesBySource = new HashMap<>();
         for (PropertySource<?> propertySource : this.abstractEnvironment.getPropertySources()) {
-            PropertySourceType propertySourceType = PropertySourceType.of(propertySource);
-            asEnumerablePropertySourceIfHasToBeProcessed(propertySourceType, propertySource)
+            asEnumerablePropertySourceIfHasToBeProcessed(propertySource)
                     .ifPresent(enumerablePropertySource ->
                             propertyNamesBySource.put(enumerablePropertySource.getName(), enumerablePropertySource.getPropertyNames())
                     );
@@ -120,15 +119,15 @@ class PropertiesLogger {
         return propertySourceNames.stream().sorted().map(name -> "- " + name).collect(Collectors.joining(System.lineSeparator()));
     }
 
-    private Optional<EnumerablePropertySource<?>> asEnumerablePropertySourceIfHasToBeProcessed(PropertySourceType propertySourceType, PropertySource<?> propertySource) {
-        if (mustBeProcessed(propertySourceType, propertySource)) {
+    private Optional<EnumerablePropertySource<?>> asEnumerablePropertySourceIfHasToBeProcessed(PropertySource<?> propertySource) {
+        if (mustBeProcessed(propertySource)) {
             return Optional.of((EnumerablePropertySource<?>) propertySource);
         }
         return Optional.empty();
     }
 
-    private boolean mustBeProcessed(PropertySourceType propertySourceType, PropertySource<?> propertySource) {
-        return propertySourceType.isEnumerable() && isNotIgnored(propertySource);
+    private boolean mustBeProcessed(PropertySource<?> propertySource) {
+        return PropertySourceType.isEnumerable(propertySource) && isNotIgnored(propertySource);
     }
 
     private boolean isNotIgnored(PropertySource<?> propertySource) {
