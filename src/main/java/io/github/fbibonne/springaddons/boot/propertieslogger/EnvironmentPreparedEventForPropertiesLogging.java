@@ -102,7 +102,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             return method;
         }
 
-        private CustomAbstractEnvironment(ConfigurableEnvironment delegate) {
+        CustomAbstractEnvironment(ConfigurableEnvironment delegate) {
             this.delegate = delegate;
         }
 

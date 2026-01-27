@@ -5,7 +5,7 @@ import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 
 import java.util.*;
-import java.util.function.UnaryOperator;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -172,9 +172,6 @@ class PropertiesLogger {
      */
     Predicate<? super String> isValueContainedIgnoringCaseIn(String container) {
         return value -> {
-            if (value==null){
-                return false;
-            }
             if (value.isEmpty()){
                 return true;
             }
@@ -187,14 +184,6 @@ class PropertiesLogger {
             return false;
         };
     }
-
-    private Stream<String> toPropertyNames(EnumerablePropertySource<?> propertySource) {
-        log.trace(() -> "Flat properties for " + propertySource.getName());
-        return Arrays.stream(propertySource.getPropertyNames());
-    private boolean mustBeMasked(String key) {
-        return propertiesWithHiddenValues.stream().anyMatch(key::contains);
-    }
-
 
     private boolean keyWithAllowedPrefix(String key) {
         log.trace(() -> "Check if property " + key + " can be displayed");

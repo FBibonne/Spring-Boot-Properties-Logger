@@ -2,6 +2,7 @@ package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.mock.env.MockEnvironment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,14 +27,15 @@ class PropertiesLoggerTest {
             "'stringFirst', 'StrinG', true",
             "'stringLast', 'Lasts', false",
             "'stringFirst', 'astring', false",
-            "'null.is.not.contained', , false",
             "'empty.is.contained', '', true",
             "'self.is.contained', 'self.is.contained', true",
             "'self.is.contained', 'SelF.iS.conTained', true",
             "'longer.is.not.contained','longer.is.not.contained+', false"
     })
     void isValueContainedIgnoringCaseInTest(String container, String value, boolean expected) {
-        PropertiesLogger propertiesLogger = new PropertiesLogger(null, null, null);
+        PropertiesLogger propertiesLogger = new PropertiesLogger(null, null, null,
+                new EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment(new MockEnvironment())
+        );
         assertThat(propertiesLogger.isValueContainedIgnoringCaseIn(container).test(value)).isEqualTo(expected);
     }
 }
