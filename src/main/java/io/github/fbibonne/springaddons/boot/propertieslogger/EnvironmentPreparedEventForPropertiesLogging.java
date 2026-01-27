@@ -1,5 +1,6 @@
 package io.github.fbibonne.springaddons.boot.propertieslogger;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.*;
@@ -24,12 +25,12 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
 
     private static final Set<String> DEFAULT_PROPS_WITH_HIDDEN_VALUES = Set.of("password", "pwd", "token", "secret", "credential", "pw");
     private static final Set<String> DEFAULT_PREFIX_FOR_PROPERTIES = Set.of("debug", "trace", "info", "logging", "spring", "server", "management", "springdoc", "properties");
-    private static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
+    public static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
     private static final boolean DEFAULT_PROPERTIES_LOGGER_DISABLED = false;
 
     private static final String KEY_FOR_PROPS_WITH_HIDDEN_VALUES = "properties.logger.with-hidden-values";
     private static final String KEY_FOR_PREFIX_FOR_PROPERTIES = "properties.logger.prefix-for-properties";
-    private static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
+    public static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
     public static final String KEY_FOR_DISABLED = "properties.logger.disabled";
 
     @Override
@@ -61,19 +62,29 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         final AllowedPrefixForProperties allowedPrefixForProperties = new AllowedPrefixForProperties(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PREFIX_FOR_PROPERTIES, Set.class, DEFAULT_PREFIX_FOR_PROPERTIES));
         final IgnoredPropertySources ignoredPropertySources = new IgnoredPropertySources(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_SOURCES_IGNORED,  Set.class, DEFAULT_SOURCES_IGNORED));
 
-        PropertiesLogger propertiesLogger = new PropertiesLogger(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources);
-        propertiesLogger.doLogProperties(abstractEnvironment);
+        PropertiesLogger propertiesLogger = new PropertiesLogger(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources, abstractEnvironment);
+        propertiesLogger.doLogProperties();
     }
 
     private <T> T getPropertyOrDefaultAndTrace(PropertyResolver environment, String key, Class<T> clazz, T defaultValue) {
+        T result;
         try {
-            T result = environment.getProperty(key, clazz, defaultValue);
-            log.trace(() -> key + " -> " + result);
-            return result;
-        } catch (Exception e) {
-            log.info(()-> "Error while getting property " + key + " : " + e.getMessage()+System.lineSeparator()+"Will use default value");
-            return defaultValue;
+            result = getPropertyOrDefaultAndTraceThrowingException(environment, key, clazz, defaultValue);
+        } catch (RuntimeException e) {
+            logExceptionWhenGettingProperty(key, e);
+            result= defaultValue;
         }
+        return result;
+    }
+
+    private static void logExceptionWhenGettingProperty(String key, RuntimeException e) {
+        log.info(()-> "Error while getting property " + key + " : " + e.getMessage()+System.lineSeparator()+"Will use default value");
+    }
+
+    private static <T>  T getPropertyOrDefaultAndTraceThrowingException(PropertyResolver environment, String key, Class<T> clazz, T defaultValue) throws RuntimeException{
+        T result = environment.getProperty(key, clazz, defaultValue);
+        log.trace(() -> key + " -> " + result);
+        return result;
     }
 
     static final class CustomAbstractEnvironment implements PropertyResolver {
@@ -81,6 +92,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         private static final Method getPropertyAsRawString = resolveMethod(AbstractPropertyResolver.class, "getPropertyAsRawString", String.class);
         
         private final ConfigurableEnvironment delegate;
+        @Nullable
         private AbstractPropertyResolver propertyResolver;
 
 
@@ -90,10 +102,11 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             return method;
         }
 
-        private CustomAbstractEnvironment(ConfigurableEnvironment delegate) {
+        CustomAbstractEnvironment(ConfigurableEnvironment delegate) {
             this.delegate = delegate;
         }
 
+        @Nullable
         private AbstractPropertyResolver invokeGetPropertyResolver(ConfigurableEnvironment delegate) {
             if (delegate instanceof AbstractEnvironment abstractEnvironment) {
                 var abstractPropertyResolverCondidate = ReflectionUtils.invokeMethod(getPropertyResolver, abstractEnvironment);
@@ -110,7 +123,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         }
 
         @Override
-        public String getProperty(String key) {
+        public @Nullable String getProperty(String key) {
             return delegate.getProperty(key);
         }
 
@@ -153,6 +166,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             return delegate.getPropertySources();
         }
 
+        @Nullable
         public String getPropertySafely(String key) {
             try{
                 return delegate.getProperty(key);
@@ -164,10 +178,12 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
             }
         }
 
+        @Nullable
         private String getPropertyAsRawString(String key) {
             return invokeGetPropertyAsRawString(key);
         }
 
+        @Nullable
         private String invokeGetPropertyAsRawString(String key) {
                   if (this.propertyResolver == null) {
                 this.propertyResolver = invokeGetPropertyResolver(this.delegate);

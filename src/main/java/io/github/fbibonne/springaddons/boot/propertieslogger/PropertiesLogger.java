@@ -1,23 +1,17 @@
 package io.github.fbibonne.springaddons.boot.propertieslogger;
 
-import org.springframework.boot.ansi.AnsiPropertySource;
-import org.springframework.boot.env.RandomValuePropertySource;
-import org.springframework.boot.origin.OriginLookup;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
-import org.springframework.jndi.JndiPropertySource;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Class doing the real stuff for logging properties. The collect of properties to log, their value and the logging is done
- * inside the {@link this#doLogProperties(EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment)} method.
+ * inside the {@link this#doLogProperties()} method.
  * The state of the class stores {@link PropertySource} found, and a reference to an operator providing the origin of a property
  * which is found while scanning propertySources
  */
@@ -30,94 +24,142 @@ class PropertiesLogger {
     final PropertiesWithHiddenValues propertiesWithHiddenValues;
     final AllowedPrefixForProperties allowedPrefixForProperties;
     final IgnoredPropertySources ignoredPropertySources;
-    final Set<String> propertySourceNames = new HashSet<>();
-    final StringBuilder stringWithPropertiesToDisplay = new StringBuilder();
-
-    UnaryOperator<String> originFinder = k->"";
+    final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment;
+    final OriginFinder originFinder;
 
 
-    PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources) {
+    PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
         this.propertiesWithHiddenValues = propertiesWithHiddenValues;
         this.allowedPrefixForProperties = allowedPrefixForProperties;
         this.ignoredPropertySources = ignoredPropertySources;
+        this.abstractEnvironment = abstractEnvironment;
+        this.originFinder = new OriginFinder(abstractEnvironment.getPropertySources());
     }
 
     /**
      * This method :
      * <ol>
-     *     <li>lists all propertySources of the environment and exclude all those which cannot be processed (see method {@link this#isEnumerable(PropertySource)}
-     *     or are listed to be ignored (see property {@code properties.logger.sources-ignored}</li>
+     *     <li>lists all propertySources of the environment and exclude all those which won't be processed :
+     *       <ul>
+     *           <li>propertySources which will be processed must satisfy two conditions : be a subtype of {@link EnumerablePropertySource} AND
+     *           must not be ignored (see {@link IgnoredPropertySources#isIgnored(PropertySource)}</li>
+     *           <li>debug message is logged if the propertySource is ignored</li>
+     *           <li>warn message is logged if the propertySource is a {@link org.springframework.boot.ansi.AnsiPropertySource} (whose processing is not implmented).
+     *           in such case, it will be ignored</li>
+
+     *           <li>If propertySource has an unknown type, a warning is logged</li>
+     *       </ul>
+     *     </li>
      *     <li>for each propertySource not excluded, list all property keys then exclude {@code null} keys and non-allowed prefixed ones (see property {@code properties.logger.prefix-for-properties}</li>
      *     <li>order distinct keys with alphabetical order (natural order of {@link String}</li>
      *     <li>for each key, compute an expression {@code key = value ### FROM value_origin ###}  where {@code value} is the value of the key resolved against
-     *     the environment (or masked if key is listed in property {@code properties.logger.with-hidden-values}) and {@code value_origin} is the
-     *     propertySource which contains the value to which the key is resolved (if field {@link this#originFinder} can resolve it)</li>
+     *     the environment ({@link PropertiesLogger#abstractEnvironment}) or masked if key is listed in property {@code properties.logger.with-hidden-values}. </li>
      *     <li>log the list of used propertySources to find keys, the ordered list of properties and their values and origin when available</li>
      * </ol>
      *
-     * @param abstractEnvironment : the environment of the application wrapped as an {@link io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment}
-     *                            to safely resolve properties with unknown placeholders
      */
-    public void doLogProperties(final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
-        log.debug(() -> "Start logging properties with prefix " + allowedPrefixForProperties + " for all properties sources except " + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
+    public void doLogProperties() {
+        debugStarting();
+        final StringBuilder stringWithPropertiesToDisplay = new StringBuilder();
 
-        abstractEnvironment.getPropertySources().stream()
-                .mapMulti(this::asEnumerablePropertySourceIfHasToBeProcessed)
-                .flatMap(this::toPropertyNames)
-                .distinct()
-                .filter(this::nonNullKeyWithPrefix)
-                .sorted()
-                .forEach(key -> resolveValueThenAppendToDisplay(key, abstractEnvironment));
+        Map<String, String[]> propertyNamesBySource = propertyNamesBySourceFromEnvironment();
+        final Set<String> propertySourceNames = propertyNamesBySource.keySet();
 
-        stringWithPropertiesToDisplay
-                .append(SEPARATION_LINE)
-                .insert(0, System.lineSeparator())
-                .insert(0, "                                     ====");
-        insertPropretySourceNamesOnePerLine(propertySourceNames, stringWithPropertiesToDisplay);
-        stringWithPropertiesToDisplay.insert(0, """
-                        
-                                                Values of properties from sources :
-                        """
-                )
-                .insert(0, SEPARATION_LINE)
-                .insert(0, System.lineSeparator());
+        stringWithPropertiesToDisplay.append(toKeyValuesBlock(propertyNamesBySource))
+                .append(System.lineSeparator())
+                .append(SEPARATION_LINE);
+
+        stringWithPropertiesToDisplay.insert(0, headerBlock(propertySourceNames));
 
 
         log.info(stringWithPropertiesToDisplay::toString);
     }
 
-    private void insertPropretySourceNamesOnePerLine(Set<String> propertySourceNames, StringBuilder stringWithPropertiesToDisplay) {
-        propertySourceNames.forEach(name -> stringWithPropertiesToDisplay.insert(0, System.lineSeparator()).insert(0, name).insert(0, "- "));
+    private String headerBlock(Set<String> propertySourceNames) {
+        return """
+                
+                %1$s
+                                        Values of properties from sources :
+                %2$s
+                                                     ====
+                """.formatted(SEPARATION_LINE, insertPropretySourceNamesOnePerLine(propertySourceNames));
     }
 
-    private void asEnumerablePropertySourceIfHasToBeProcessed(PropertySource<?> propertySource, Consumer<EnumerablePropertySource<?>> downstream) {
-        var mustBeProcessed = isEnumerable(propertySource) && isNotIgnored(propertySource);
-        if (mustBeProcessed) {
-            propertySourceNames.add(propertySource.getName());
-            downstream.accept((EnumerablePropertySource<?>) propertySource);
+    private String toKeyValuesBlock(Map<String, String[]> propertyNamesBySource) {
+        return distinctPropertiesNames(propertyNamesBySource)
+                .filter(this::keyWithAllowedPrefix)
+                .sorted()
+                .map(this::toDisplayedLine)
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private static Stream<String> distinctPropertiesNames(Map<String, String[]> propertyNamesBySource) {
+        return propertyNamesBySource.values().stream()
+                .flatMap(Arrays::stream)
+                .distinct();
+    }
+
+    private Map<String, String[]> propertyNamesBySourceFromEnvironment() {
+        Map<String, String[]> propertyNamesBySource = new HashMap<>();
+        for (PropertySource<?> propertySource : this.abstractEnvironment.getPropertySources()) {
+            asEnumerablePropertySourceIfHasToBeProcessed(propertySource)
+                    .ifPresent(enumerablePropertySource ->
+                            propertyNamesBySource.put(enumerablePropertySource.getName(), enumerablePropertySource.getPropertyNames())
+                    );
         }
+        return propertyNamesBySource;
+    }
+
+    private void debugStarting() {
+        log.debug(() -> "Start logging properties with prefix " + allowedPrefixForProperties + " for all properties sources except "
+                + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
+    }
+
+    private String insertPropretySourceNamesOnePerLine(Set<String> propertySourceNames) {
+        return propertySourceNames.stream().sorted().map(name -> "- " + name).collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private Optional<EnumerablePropertySource<?>> asEnumerablePropertySourceIfHasToBeProcessed(PropertySource<?> propertySource) {
+        if (mustBeProcessed(propertySource)) {
+            return Optional.of((EnumerablePropertySource<?>) propertySource);
+        }
+        return Optional.empty();
+    }
+
+    private boolean mustBeProcessed(PropertySource<?> propertySource) {
+        return PropertySourceType.isEnumerable(propertySource) && isNotIgnored(propertySource);
     }
 
     private boolean isNotIgnored(PropertySource<?> propertySource) {
-        if (ignoredPropertySources.stream().anyMatch(propertySource.getName()::contains)) {
-            log.trace(() -> propertySource + " is listed to be ignored");
+        if (ignoredPropertySources.isIgnored(propertySource)) {
+            traceIgnored(propertySource);
             return false;
         }
         return true;
     }
 
-    private void resolveValueThenAppendToDisplay(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environement) {
-        stringWithPropertiesToDisplay.append(key).append(" = ")
-                .append(resolveValueThenMaskItIfSecret(key, environement))
-                .append(originFinder.apply(key))
-                .append(System.lineSeparator());
+    private static void traceIgnored(PropertySource<?> propertySource) {
+        log.trace(() -> propertySource + " is listed to be ignored");
     }
 
-    private String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
-        if (propertiesWithHiddenValues.stream().anyMatch(isValueContainedIgnoringCaseIn(key))) {
+    private String toDisplayedLine(String key) {
+        return key + " = " + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment)
+                + this.originFinder.findOriginFor(key).map(PropertiesLogger::originAsLine).orElse("");
+    }
+
+    private static String originAsLine(String origin) {
+        return " ### " + origin + " ###";
+    }
+
+    private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
+        if (mustBeMasked(key)) {
             return MASK;
         }
         return environment.getPropertySafely(key);
+    }
+
+    private boolean mustBeMasked(String key) {
+        return propertiesWithHiddenValues.stream().anyMatch(isValueContainedIgnoringCaseIn(key));
     }
 
     /**
@@ -130,9 +172,6 @@ class PropertiesLogger {
      */
     Predicate<? super String> isValueContainedIgnoringCaseIn(String container) {
         return value -> {
-            if (value==null){
-                return false;
-            }
             if (value.isEmpty()){
                 return true;
             }
@@ -146,69 +185,21 @@ class PropertiesLogger {
         };
     }
 
-    private Stream<String> toPropertyNames(EnumerablePropertySource<?> propertySource) {
-        log.trace(() -> "Flat properties for " + propertySource.getName());
-        return Arrays.stream(propertySource.getPropertyNames());
-    }
-
-    /**
-     * Method which filter propertySource which can be processed to find properties to log.
-     * propertySource which can be processed are a subtype of {@link EnumerablePropertySource} : if not method log a
-     * debug message or a warning message for cases not implemented yet (AnsiPropertySource and JndiPropertySource). If
-     * propertySource is of type {@link org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource},
-     * it will be referenced to resolve origin of property values later (see {@link this#originFinder}. If propertySource
-     * has an unknown type, a warning is logged.
-     * @param propertySource : instance of {@link PropertySource} which is checked for being processed or not.
-     * @return true if the propertySource can be processed.
-     */
-    private boolean isEnumerable(PropertySource<?> propertySource) {
-        if (propertySource instanceof AnsiPropertySource ansiPropertySource) {
-            log.warn(()->"Processing of AnsiPropertySource "+ ansiPropertySource+" not yet implemented : properties exclusively from this property source will be ignored");
-            return false;
-        }
-        if (propertySource instanceof PropertySource.StubPropertySource) {
-            log.debug(() -> propertySource + " is a stub property source : it does not contain properties : will be ignored");
-            return false;
-        }
-        if (propertySource instanceof RandomValuePropertySource) {
-            log.debug(()-> propertySource + " is a RandomValuePropertySource : will be ignored");
-            return false;
-        }
-        if (propertySource instanceof JndiPropertySource){
-            log.warn(()-> propertySource + " is a JndiPropertySource : it is not enumerable : will be ignored");
-            return false;
-        }
-        if (propertySource instanceof EnumerablePropertySource<?>){
-            log.trace(() -> propertySource + " is a EnumerablePropertySource : is a candidate to find keys");
-            return true;
-        }
-        if (propertySource instanceof OriginLookup<?>) {
-            if ("org.springframework.boot.context.properties.source.ConfigurationPropertySourcesPropertySource".equals(propertySource.getClass().getCanonicalName())){
-                log.debug(()-> propertySource + " will be used as the originFinder but will be ignored as a property source");
-                final OriginLookup<String> originLookup = (OriginLookup<String>) propertySource;
-                this.originFinder=key->{
-                    var origin=originLookup.getOrigin(key);
-                    return origin==null?"":" ### FROM "+ origin+" ###";
-                };
-            }else{
-                log.debug(()-> propertySource + " will be ignored as a property source and also as OriginLookup");
-            }
-            return false;
-        }
-        log.warn(()-> propertySource + " is unknown : will be ignored");
-        return false;
-    }
-
-    private boolean nonNullKeyWithPrefix(String key) {
+    private boolean keyWithAllowedPrefix(String key) {
         log.trace(() -> "Check if property " + key + " can be displayed");
-        if (key == null) {
-            return false;
+        boolean keyWithAllowedPrefix = isKeyWithAllowedPrefix(key);
+        if (!keyWithAllowedPrefix) {
+            debugNotAllowedPrefix(key);
         }
-        if (allowedPrefixForProperties.anyMatch(key::startsWith)) {
-            return true;
-        }
+        return keyWithAllowedPrefix;
+    }
+
+    private static void debugNotAllowedPrefix(String key) {
         log.debug(() -> key + " doesn't start with a logable prefix");
-        return false;
+    }
+
+    private boolean isKeyWithAllowedPrefix(String key) {
+        return allowedPrefixForProperties.anyMatch(key::startsWith);
     }
 
 }
