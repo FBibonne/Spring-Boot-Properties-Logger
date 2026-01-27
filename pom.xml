@@ -12,7 +12,7 @@
 
     <groupId>io.github.fbibonne</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
     <!-- If you can't get dependabot, find updates with :
