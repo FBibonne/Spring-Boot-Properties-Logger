@@ -12,14 +12,9 @@
 
     <groupId>io.github.fbibonne</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>2.0.0</version>
+    <version>${sigstore-maven-plugin.version}</version>
     <packaging>jar</packaging>
 
-    <!-- If you can't get dependabot, find updates with :
-    ```
-    mvn -ntp org.codehaus.mojo:versions-maven-plugin:2.21.0:display-property-updates
-    mvn -ntp org.codehaus.mojo:versions-maven-plugin:2.21.0:display-parent-updates
-    ``` -->
     <properties>
         <jspecify.version>1.0.0</jspecify.version>
         <maven.compiler.source>17</maven.compiler.source>
@@ -29,6 +24,7 @@
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
         <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
+        <sigstore-maven-plugin.version>2.0.0</sigstore-maven-plugin.version>
     </properties>
 
     <name>Spring Boot Properties Logger</name>
@@ -164,6 +160,20 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>dev.sigstore</groupId>
+                <artifactId>sigstore-maven-plugin</artifactId>
+                <version>${sigstore-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>sign</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
                 <version>${central-publishing-maven-plugin.version}</version>
@@ -171,7 +181,6 @@
                 <configuration>
                     <publishingServerId>central</publishingServerId>
                     <deploymentName>Properties-Logger</deploymentName>
-                    <autoPublish>true</autoPublish>
                 </configuration>
             </plugin>
         </plugins>

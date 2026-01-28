@@ -195,3 +195,11 @@ methods. If you have no other choice (make sure you had a complete look to
 [the numerous ways to override properties in Spring Boot](https://docs.spring.io/spring-boot/reference/features/external-config.html) )
 that defining `@DynamicPropertySource` methods to override properties in a test and you want to check the value of the 
 overrided property, consider logging it yourself or write an assertion in your test
+
+## Maintainers notes
+
+- to update pom.xml if one can't get dependabot, find updates with :
+    ```
+    mvn -ntp org.codehaus.mojo:versions-maven-plugin:2.21.0:display-property-updates
+    mvn -ntp org.codehaus.mojo:versions-maven-plugin:2.21.0:display-parent-updates
+    ```
