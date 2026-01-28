@@ -1,0 +1,136 @@
+{
+  "groups": [
+    {
+      "name": "properties.logger",
+      "type": "io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging",
+      "sourceType": "io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging",
+      "description": "Configuration properties for the PropertiesLogger which logs application properties on startup."
+    }
+  ],
+  "properties": [
+    {
+      "name": "properties.logger.disabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to disable the properties logging feature. When set to true, no properties will be logged on application startup.",
+      "sourceType": "io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging",
+      "defaultValue": false
+    },
+    {
+      "name": "properties.logger.with-hidden-values",
+      "type": "java.util.Set<java.lang.String>",
+      "description": "Set of property name patterns whose values should be hidden (masked) in the logs. Properties containing these patterns will have their values replaced with a placeholder for security purposes.",
+      "sourceType": "io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging",
+      "defaultValue": ["password", "pwd", "token", "secret", "credential", "pw"]
+    },
+    {
+      "name": "properties.logger.prefix-for-properties",
+      "type": "java.util.Set<java.lang.String>",
+      "description": "Set of allowed prefixes for properties to be logged. Only properties starting with one of these prefixes will be included in the logs.",
+      "sourceType": "io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging",
+      "defaultValue": ["debug", "trace", "info", "logging", "spring", "server", "management", "springdoc", "properties"]
+    },
+    {
+      "name": "properties.logger.sources-ignored",
+      "type": "java.util.Set<java.lang.String>",
+      "description": "Set of property source names to ignore when logging properties. Properties from these sources will not be logged.",
+      "sourceType": "io.github.fbibonne.springaddons.boot.propertieslogger.EnvironmentPreparedEventForPropertiesLogging",
+      "defaultValue": ["systemProperties", "systemEnvironment"]
+    }
+  ],
+  "hints": [
+    {
+      "name": "properties.logger.with-hidden-values",
+      "values": [
+        {
+          "value": "password",
+          "description": "Hide values of properties containing 'password'."
+        },
+        {
+          "value": "pwd",
+          "description": "Hide values of properties containing 'pwd'."
+        },
+        {
+          "value": "token",
+          "description": "Hide values of properties containing 'token'."
+        },
+        {
+          "value": "secret",
+          "description": "Hide values of properties containing 'secret'."
+        },
+        {
+          "value": "credential",
+          "description": "Hide values of properties containing 'credential'."
+        },
+        {
+          "value": "pw",
+          "description": "Hide values of properties containing 'pw'."
+        },
+        {
+          "value": "key",
+          "description": "Hide values of properties containing 'key'."
+        },
+        {
+          "value": "apikey",
+          "description": "Hide values of properties containing 'apikey'."
+        }
+      ],
+      "providers": [
+        {
+          "name": "any"
+        }
+      ]
+    },
+    {
+      "name": "properties.logger.prefix-for-properties",
+      "values": [
+        {
+          "value": "spring",
+          "description": "Include Spring framework properties."
+        },
+        {
+          "value": "server",
+          "description": "Include server configuration properties."
+        },
+        {
+          "value": "management",
+          "description": "Include actuator management properties."
+        },
+        {
+          "value": "logging",
+          "description": "Include logging configuration properties."
+        },
+        {
+          "value": "springdoc",
+          "description": "Include SpringDoc/OpenAPI properties."
+        }
+      ],
+      "providers": [
+        {
+          "name": "any"
+        }
+      ]
+    },
+    {
+      "name": "properties.logger.sources-ignored",
+      "values": [
+        {
+          "value": "systemProperties",
+          "description": "Ignore JVM system properties."
+        },
+        {
+          "value": "systemEnvironment",
+          "description": "Ignore OS environment variables."
+        },
+        {
+          "value": "commandLineArgs",
+          "description": "Ignore command line arguments."
+        }
+      ],
+      "providers": [
+        {
+          "name": "any"
+        }
+      ]
+    }
+  ]
+}
