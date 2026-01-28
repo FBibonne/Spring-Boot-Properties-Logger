@@ -12,7 +12,7 @@
 
     <groupId>io.github.fbibonne</groupId>
     <artifactId>boot-properties-logger-starter</artifactId>
-    <version>${sigstore-maven-plugin.version}</version>
+    <version>2.1.0</version>
     <packaging>jar</packaging>
 
     <properties>
