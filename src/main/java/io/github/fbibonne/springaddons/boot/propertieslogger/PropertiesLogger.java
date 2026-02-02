@@ -65,12 +65,10 @@ class PropertiesLogger {
         Map<String, String[]> propertyNamesBySource = propertyNamesBySourceFromEnvironment();
         final Set<String> propertySourceNames = propertyNamesBySource.keySet();
 
-        stringWithPropertiesToDisplay.append(toKeyValuesBlock(propertyNamesBySource))
+        stringWithPropertiesToDisplay.append( headerBlock(propertySourceNames))
+                .append(toKeyValuesBlock(propertyNamesBySource))
                 .append(System.lineSeparator())
                 .append(SEPARATION_LINE);
-
-        stringWithPropertiesToDisplay.insert(0, headerBlock(propertySourceNames));
-
 
         log.info(stringWithPropertiesToDisplay::toString);
     }
