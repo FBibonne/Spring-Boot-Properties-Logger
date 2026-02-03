@@ -54,6 +54,7 @@ class WebAppIntegrationTest {
                         spring.application.pid =\s""").formatted())
                 .contains(("""
                         spring.config.additional-location = classpath:additional-file.properties,file:src/test/resources/otherProps/application.properties ### FROM "spring.config.additional-location" from property source "commandLineArgs" ###
+                        spring.datasource.username = user_prod ### FROM System Environment Property "SPRING_DATASOURCE_USERNAME" ###
                         spring.jmx.enabled = false ### FROM "spring.jmx.enabled" from property source "Inlined Test Properties" ###
                         ================================================================================%n""").formatted()
                 );
