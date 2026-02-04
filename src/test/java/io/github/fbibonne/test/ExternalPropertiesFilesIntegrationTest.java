@@ -13,6 +13,8 @@ import org.springframework.core.io.ClassPathResource;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.ANSI_BROWN_UNDERLINE_SEQUENCE;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.ANSI_NORMAL_SEQUENCE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -40,14 +42,14 @@ class ExternalPropertiesFilesIntegrationTest {
                 "--spring.main.web-application-type=none")).doesNotThrowAnyException();
         Environment environment = contextRef.context.getEnvironment();
         assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
-        assertThat(capturedOutput.toString()).contains("spring.config.location = optional:file:/${unexisting}/application.properties");
+        assertThat(capturedOutput.toString()).contains("spring.config.location"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"optional:file:/${unexisting}/application.properties");
         //otherProps/application.properties
         /*
          * io.github.fbibonne.shared = additionalPropsInClasspath
          * io.github.fbibonne.specific.additionalPropsInClasspath = additionalPropsInClasspath
          */
         assertThat(environment.getProperty("io.github.fbibonne.specific.additionalPropsInClasspath")).hasToString("additionalPropsInClasspath");
-        assertThat(capturedOutput.toString()).contains("io.github.fbibonne.specific.additionalPropsInClasspath = additionalPropsInClasspath");
+        assertThat(capturedOutput.toString()).contains("io.github.fbibonne.specific.additionalPropsInClasspath"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"additionalPropsInClasspath");
         // /${existing}/application.properties => nonExcluded/application.properties
         /*
          * io.github.fbibonne.shared = nonExcludedFile
@@ -55,7 +57,7 @@ class ExternalPropertiesFilesIntegrationTest {
          * io.github.fbibonne.sharedWithExternal = nonExcludedFile
          */
         assertThat(environment.getProperty("io.github.fbibonne.specific.nonExcludedFile")).hasToString("nonExcludedFile");
-        assertThat(capturedOutput.toString()).contains("io.github.fbibonne.specific.nonExcludedFile = nonExcludedFile");
+        assertThat(capturedOutput.toString()).contains("io.github.fbibonne.specific.nonExcludedFile"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"nonExcludedFile");
         // /${existing:"+ ignoredPath +"}/application.properties => not /ignored/application.properties
         assertThat(environment.getProperty("io.github.fbibonne.specific.ignoredFile")).isNull();
         assertThat(capturedOutput.toString()).doesNotContain("io.github.fbibonne.specific.ignoredFile");

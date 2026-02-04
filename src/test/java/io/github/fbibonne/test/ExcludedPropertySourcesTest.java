@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {
@@ -63,11 +64,11 @@ class ExcludedPropertySourcesTest {
         assertThat(environment.getProperty("properties.logger.sources-ignored")).hasToString("systemProperties, systemEnvironment,[application.properties],[otherProps/application.properties],commandLineArgs,Inlined Test Properties,["+ externalPropertiesPath.toAbsolutePath()+"]");
         assertThat(environment.getProperty("io.github.fbibonne.shared")).hasToString("dynamicPropertySource");
         assertThat(environment.getProperty("io.github.fbibonne.specific.nonExcludedFile")).hasToString("nonExcludedFile");
-        assertThat(logOutput).contains("io.github.fbibonne.shared = inlineTestProperties")
+        assertThat(logOutput).contains("io.github.fbibonne.shared"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"inlineTestProperties")
                 .doesNotContain("io.github.fbibonne.specific.dynamicPropertySource")
-                .contains("io.github.fbibonne.specific.nonExcludedFile = nonExcludedFile")
+                .contains("io.github.fbibonne.specific.nonExcludedFile"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"nonExcludedFile")
                 .doesNotContain("io.github.fbibonne.sharedWithExternal = nonExcludedFile")
-                .contains("io.github.fbibonne.sharedWithExternal = inFileSystem")
+                .contains("io.github.fbibonne.sharedWithExternal"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"inFileSystem")
                 .doesNotContain("io.github.fbibonne.specific.inFileSystem = inFileSystem")
                 .doesNotContain("io.github.fbibonne.specific.applicationproperties")
                 .doesNotContain("io.github.fbibonne.specific.additionalPropsInClasspath")
