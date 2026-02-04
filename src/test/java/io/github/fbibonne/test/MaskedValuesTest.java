@@ -8,6 +8,7 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Configuration;
 
 import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTests.MASK;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {
@@ -21,7 +22,7 @@ class MaskedValuesTest {
     @Test
     void checkMaskValuesIgnoreCase(CapturedOutput output) {
         assertThat(output.toString()).doesNotContain("verysecretpassword")
-                .contains("com.mycompany.serviceContactPassword = "+MASK);
+                .contains(ANSI_CYAN_BOLD_SEQUENCE+"com.mycompany.serviceContactPassword"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+MASK);
     }
 
 }

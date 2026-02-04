@@ -11,15 +11,20 @@ import java.util.stream.Stream;
 
 /**
  * Class doing the real stuff for logging properties. The collect of properties to log, their value and the logging is done
- * inside the {@link this#doLogProperties()} method.
+ * inside the <code>doLogProperties</code> method.
  * The state of the class stores {@link PropertySource} found, and a reference to an operator providing the origin of a property
  * which is found while scanning propertySources
  */
-class PropertiesLogger {
+public class PropertiesLogger {
 
     public static final String SEPARATION_LINE = "================================================================================";
     public static final String MASK = "******";
     private static final LocalLogger log = new LocalLogger(PropertiesLogger.class);
+    public static final String ANSI_CYAN_BOLD_SEQUENCE = "\u001B[1;36m";
+    public static final String ANSI_NORMAL_SEQUENCE = "\u001B[0m";
+    public static final String ANSI_BROWN_UNDERLINE_SEQUENCE = "\u001B[4;33m";
+    public static final String AINSI_PURPLE_ITALIC_SEQUENCE = "\u001B[1;3;35m";
+    public static final String AINSI_GREEN_BOLD_SEQUENCE = "\u001B[1;32m";
 
     final PropertiesWithHiddenValues propertiesWithHiddenValues;
     final AllowedPrefixForProperties allowedPrefixForProperties;
@@ -46,7 +51,7 @@ class PropertiesLogger {
      *           <li>debug message is logged if the propertySource is ignored</li>
      *           <li>warn message is logged if the propertySource is a {@link org.springframework.boot.ansi.AnsiPropertySource} (whose processing is not implmented).
      *           in such case, it will be ignored</li>
-
+     *
      *           <li>If propertySource has an unknown type, a warning is logged</li>
      *       </ul>
      *     </li>
@@ -58,14 +63,14 @@ class PropertiesLogger {
      * </ol>
      *
      */
-    public void doLogProperties() {
+    void doLogProperties() {
         debugStarting();
         final StringBuilder stringWithPropertiesToDisplay = new StringBuilder();
 
         Map<String, String[]> propertyNamesBySource = propertyNamesBySourceFromEnvironment();
         final Set<String> propertySourceNames = propertyNamesBySource.keySet();
 
-        stringWithPropertiesToDisplay.append( headerBlock(propertySourceNames))
+        stringWithPropertiesToDisplay.append(headerBlock(propertySourceNames))
                 .append(toKeyValuesBlock(propertyNamesBySource))
                 .append(System.lineSeparator())
                 .append(SEPARATION_LINE);
@@ -77,10 +82,10 @@ class PropertiesLogger {
         return """
                 
                 %1$s
-                                        Values of properties from sources :
-                %2$s
+                                        %2$sValues of properties from sources :%3$s
+                %4$s
                                                      ====
-                """.formatted(SEPARATION_LINE, insertPropretySourceNamesOnePerLine(propertySourceNames));
+                """.formatted(SEPARATION_LINE, AINSI_GREEN_BOLD_SEQUENCE, ANSI_NORMAL_SEQUENCE, propretySourceNamesOnePerLine(propertySourceNames));
     }
 
     private String toKeyValuesBlock(Map<String, String[]> propertyNamesBySource) {
@@ -113,7 +118,7 @@ class PropertiesLogger {
                 + ignoredPropertySources + ". Values masked for properties whose keys contain " + propertiesWithHiddenValues);
     }
 
-    private String insertPropretySourceNamesOnePerLine(Set<String> propertySourceNames) {
+    private String propretySourceNamesOnePerLine(Set<String> propertySourceNames) {
         return propertySourceNames.stream().sorted().map(name -> "- " + name).collect(Collectors.joining(System.lineSeparator()));
     }
 
@@ -141,12 +146,13 @@ class PropertiesLogger {
     }
 
     private String toDisplayedLine(String key) {
-        return key + " = " + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment)
+        return ANSI_CYAN_BOLD_SEQUENCE + key + ANSI_NORMAL_SEQUENCE + " = "
+                + ANSI_BROWN_UNDERLINE_SEQUENCE + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment) + ANSI_NORMAL_SEQUENCE
                 + this.originFinder.findOriginFor(key).map(PropertiesLogger::originAsLine).orElse("");
     }
 
     private static String originAsLine(String origin) {
-        return " ### " + origin + " ###";
+        return " ### " + AINSI_PURPLE_ITALIC_SEQUENCE + origin + ANSI_NORMAL_SEQUENCE + " ###";
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
@@ -163,6 +169,7 @@ class PropertiesLogger {
     /**
      * Implementation of a String#containsIgnoreCase based the algorithm of String#contains
      * but using String#equalsIgnoreCase to test equality
+     *
      * @param container the string which is supposed to contain the argument passed to the predicate.
      *                  Must be not null
      * @return a predicate such as <code>container::containsIgnoreCase</code>
@@ -170,12 +177,12 @@ class PropertiesLogger {
      */
     Predicate<? super String> isValueContainedIgnoringCaseIn(String container) {
         return value -> {
-            if (value.isEmpty()){
+            if (value.isEmpty()) {
                 return true;
             }
             int valueLength = value.length();
-            for(int i = 0; i <= container.length()- valueLength; i++) {
-                if (container.substring(i, i+valueLength).equalsIgnoreCase(value)){
+            for (int i = 0; i <= container.length() - valueLength; i++) {
+                if (container.substring(i, i + valueLength).equalsIgnoreCase(value)) {
                     return true;
                 }
             }
