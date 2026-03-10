@@ -205,7 +205,7 @@ the properties or values they provide since they are valued after.
 
 #### from files from `@PropertySource` annotations
 
-`@PropertySource` annotations over `@Configuration` classes let define properties source files whose parsing is
+`@PropertySource` annotations over `@Configuration` classes let define properties source files whose parsing iser
 triggered by a factory post processor. Factory post processors run after the library, so properties and/or values in
 these files cannot be displayed
 
@@ -218,6 +218,12 @@ methods. If you have no other choice (make sure you had a complete look to
 [the numerous ways to override properties in Spring Boot](https://docs.spring.io/spring-boot/reference/features/external-config.html) )
 that defining `@DynamicPropertySource` methods to override properties in a test and you want to check the value of the 
 overrided property, consider logging it yourself or write an assertion in your test
+
+#### from servlet context init parameters
+
+Servlet Context init parameters and servlet config properties are added as properties to the environment through the properties sources
+`ServletContextPropertySource` and `ServletConfigPropertySource`. Both sources are processed when application context is refreshed 
+so after that properties Log library has run. Therefore, the library cannot display them.
 
 ## Maintainers notes
 
