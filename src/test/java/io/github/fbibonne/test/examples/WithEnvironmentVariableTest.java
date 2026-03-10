@@ -18,7 +18,7 @@ class WithEnvironmentVariableTest {
     @Test
     void shouldPickKeyFromApplicationPropertiesAndValueFromEnvironmentVariable(CapturedOutput output) {
         String logOutput = output.toString();
-
+        assertThat(System.getenv("SPRING_DATASOURCE_USERNAME")).hasToString("user_prod");
         assertThat(logOutput).contains("spring.datasource.username"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"user_prod"+ANSI_NORMAL_SEQUENCE+" ### "+AINSI_PURPLE_ITALIC_SEQUENCE+"FROM System Environment Property \"SPRING_DATASOURCE_USERNAME\""+ANSI_NORMAL_SEQUENCE+" ###");
     }
 

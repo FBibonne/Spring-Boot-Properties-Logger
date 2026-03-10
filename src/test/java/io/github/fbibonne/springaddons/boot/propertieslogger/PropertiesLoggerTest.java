@@ -34,7 +34,7 @@ class PropertiesLoggerTest {
     })
     void isValueContainedIgnoringCaseInTest(String container, String value, boolean expected) {
         PropertiesLogger propertiesLogger = new PropertiesLogger(null, null, null,
-                new EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment(new MockEnvironment())
+                new MockEnvironment()
         );
         assertThat(propertiesLogger.isValueContainedIgnoringCaseIn(container).test(value)).isEqualTo(expected);
     }

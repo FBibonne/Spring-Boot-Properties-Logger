@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.PlaceholderResolutionException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -41,7 +42,7 @@ class ExternalPropertiesFilesIntegrationTest {
                 "--properties.logger.prefix-for-properties=info,logging,spring,server,management,properties,springdoc,io",
                 "--spring.main.web-application-type=none")).doesNotThrowAnyException();
         Environment environment = contextRef.context.getEnvironment();
-        assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
+        assertThatCode(()->environment.getProperty("spring.config.location")).isInstanceOf(PlaceholderResolutionException.class).hasMessageContaining("Could not resolve placeholder 'unexisting'");
         assertThat(capturedOutput.toString()).contains("spring.config.location"+ANSI_NORMAL_SEQUENCE+" = "+ANSI_BROWN_UNDERLINE_SEQUENCE+"optional:file:/${unexisting}/application.properties");
         //otherProps/application.properties
         /*
