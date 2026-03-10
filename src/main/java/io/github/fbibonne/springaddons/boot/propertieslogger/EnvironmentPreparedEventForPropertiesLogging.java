@@ -133,7 +133,7 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         }
 
         @Override
-        public <T> T getProperty(String key, Class<T> targetType) {
+        public <T> @Nullable T getProperty(String key, Class<T> targetType) {
             return delegate.getProperty(key, targetType);
         }
 
