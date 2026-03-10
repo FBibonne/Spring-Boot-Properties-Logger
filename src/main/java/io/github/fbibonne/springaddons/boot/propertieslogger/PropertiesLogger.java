@@ -1,6 +1,7 @@
 package io.github.fbibonne.springaddons.boot.propertieslogger;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.EnumerablePropertySource;
 import org.springframework.core.env.PropertySource;
 
@@ -29,16 +30,16 @@ public class PropertiesLogger {
     final PropertiesWithHiddenValues propertiesWithHiddenValues;
     final AllowedPrefixForProperties allowedPrefixForProperties;
     final IgnoredPropertySources ignoredPropertySources;
-    final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment;
+    final ConfigurableEnvironment configurableEnvironment;
     final OriginFinder originFinder;
 
 
-    PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
+    PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, ConfigurableEnvironment configurableEnvironment) {
         this.propertiesWithHiddenValues = propertiesWithHiddenValues;
         this.allowedPrefixForProperties = allowedPrefixForProperties;
         this.ignoredPropertySources = ignoredPropertySources;
-        this.abstractEnvironment = abstractEnvironment;
-        this.originFinder = new OriginFinder(abstractEnvironment.getPropertySources());
+        this.configurableEnvironment = configurableEnvironment;
+        this.originFinder = new OriginFinder(this.configurableEnvironment.getPropertySources());
     }
 
     /**
@@ -58,7 +59,7 @@ public class PropertiesLogger {
      *     <li>for each propertySource not excluded, list all property keys then exclude {@code null} keys and non-allowed prefixed ones (see property {@code properties.logger.prefix-for-properties}</li>
      *     <li>order distinct keys with alphabetical order (natural order of {@link String}</li>
      *     <li>for each key, compute an expression {@code key = value ### FROM value_origin ###}  where {@code value} is the value of the key resolved against
-     *     the environment ({@link PropertiesLogger#abstractEnvironment}) or masked if key is listed in property {@code properties.logger.with-hidden-values}. </li>
+     *     the environment ({@link PropertiesLogger#configurableEnvironment}) or masked if key is listed in property {@code properties.logger.with-hidden-values}. </li>
      *     <li>log the list of used propertySources to find keys, the ordered list of properties and their values and origin when available</li>
      * </ol>
      *
@@ -104,7 +105,7 @@ public class PropertiesLogger {
 
     private Map<String, String[]> propertyNamesBySourceFromEnvironment() {
         Map<String, String[]> propertyNamesBySource = new HashMap<>();
-        for (PropertySource<?> propertySource : this.abstractEnvironment.getPropertySources()) {
+        for (PropertySource<?> propertySource : this.configurableEnvironment.getPropertySources()) {
             asEnumerablePropertySourceIfHasToBeProcessed(propertySource)
                     .ifPresent(enumerablePropertySource ->
                             propertyNamesBySource.put(enumerablePropertySource.getName(), enumerablePropertySource.getPropertyNames())
@@ -147,7 +148,7 @@ public class PropertiesLogger {
 
     private String toDisplayedLine(String key) {
         return ANSI_CYAN_BOLD_SEQUENCE + key + ANSI_NORMAL_SEQUENCE + " = "
-                + ANSI_BROWN_UNDERLINE_SEQUENCE + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment) + ANSI_NORMAL_SEQUENCE
+                + ANSI_BROWN_UNDERLINE_SEQUENCE + resolveValueThenMaskItIfSecret(key) + ANSI_NORMAL_SEQUENCE
                 + this.originFinder.findOriginFor(key).map(PropertiesLogger::originAsLine).orElse("");
     }
 
@@ -155,11 +156,11 @@ public class PropertiesLogger {
         return " ### " + AINSI_PURPLE_ITALIC_SEQUENCE + origin + ANSI_NORMAL_SEQUENCE + " ###";
     }
 
-    private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
+    private @Nullable String resolveValueThenMaskItIfSecret(String key) {
         if (mustBeMasked(key)) {
             return MASK;
         }
-        return environment.getPropertySafely(key);
+        return this.configurableEnvironment.getProperty(key);
     }
 
     private boolean mustBeMasked(String key) {
