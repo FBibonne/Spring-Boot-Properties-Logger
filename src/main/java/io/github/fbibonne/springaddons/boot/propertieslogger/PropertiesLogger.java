@@ -9,6 +9,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.springframework.util.StringUtils.hasLength;
+
 /**
  * Class doing the real stuff for logging properties. The collect of properties to log, their value and the logging is done
  * inside the <code>doLogProperties</code> method.
@@ -157,10 +159,11 @@ public class PropertiesLogger {
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
-        if (mustBeMasked(key)) {
+        String value = environment.getPropertySafely(key);
+        if (mustBeMasked(key) && hasLength(value)) {
             return MASK;
         }
-        return environment.getPropertySafely(key);
+        return value;
     }
 
     private boolean mustBeMasked(String key) {
