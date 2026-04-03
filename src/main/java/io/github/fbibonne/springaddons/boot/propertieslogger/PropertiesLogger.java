@@ -156,10 +156,11 @@ public class PropertiesLogger {
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
-        if (mustBeMasked(key)) {
+        String value = environment.getPropertySafely(key);
+        if (mustBeMasked(key) && value != null && !value.isEmpty()) {
             return MASK;
         }
-        return environment.getPropertySafely(key);
+        return value;
     }
 
     private boolean mustBeMasked(String key) {

@@ -175,10 +175,14 @@ plus the beginning of your company name to display the properties for your appli
 |----------------------------------------|:---------------------------------------------|
 | `properties.logger.with-hidden-values` | password, pwd, token, secret, credential, pw |
 
-When a property is displayed, there is a filter which avoid to leak secrets in logs : all properties whose key contains 
+When a property is displayed, there is a filter which avoid to leak secrets in logs : all properties whose key contains
 one of the token in `properties.logger.with-hidden-values` will be displayed with the value `******` instead of the actual value.
-The default value of `properties.logger.with-hidden-values`  contains the most common tokens for secrets but you should 
+The default value of `properties.logger.with-hidden-values`  contains the most common tokens for secrets but you should
 add the specific ones you may have in your application.
+
+**Exception: empty values are never masked.** If the resolved value of a secret property is an empty string (length zero,
+not whitespace), the mask is not applied and the empty value is displayed as-is. An empty secret is likely a misconfiguration,
+and showing it rather than masking it helps reveal the mistake.
 
 ### Disabling library
 
