@@ -108,6 +108,7 @@ properties prefixed by `properties.logger`. They are three of them:
 - [`properties.logger.prefix-for-properties`](#prefix-list-for-displayed-properties)
 - [`properties.logger.with-hidden-values`](#properties-with-hidden-values)
 - [`properties.logger.disabled`](#disabling-library)
+- [`properties.logger.coloration.disabled`](#disabling-coloration)
 
 ### Excluded properties sources
 
@@ -187,7 +188,23 @@ add the specific ones you may have in your application.
 | `properties.logger.disabled ` | false         |
 
 If you want to temporarily disable the library and suspend displaying of properties without modifying the classpath and other settings,
-set this property to `true`. By default, the library is enabled. 
+set this property to `true`. By default, the library is enabled.
+
+### Disabling coloration
+
+| Related Property                          | Default value |
+|-------------------------------------------|:--------------|
+| `properties.logger.coloration.disabled`   | false         |
+
+By default, the output is colorized using ANSI escape codes, making it easier to read in a terminal:
+
+- property names are displayed in **bold cyan**
+- values in underlined yellow
+- origins in bold italic magenta
+- section headers in bold green
+
+If your log output does not support ANSI codes (e.g. when redirecting to a file, or in a log aggregation system that does not render colors),
+set this property to `true` to disable coloration and get plain text output instead.
 
 ## Origins of values
 

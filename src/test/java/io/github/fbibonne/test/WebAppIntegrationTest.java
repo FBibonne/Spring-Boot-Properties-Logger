@@ -9,7 +9,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.annotation.DirtiesContext;
 
-import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.*;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTestClasses.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {

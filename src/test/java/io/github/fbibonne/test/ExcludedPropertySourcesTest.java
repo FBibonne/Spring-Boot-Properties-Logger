@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.*;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTestClasses.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {

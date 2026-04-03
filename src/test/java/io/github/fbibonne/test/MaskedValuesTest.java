@@ -6,9 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Configuration;
-
-import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTests.MASK;
-import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.*;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTestClasses.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {

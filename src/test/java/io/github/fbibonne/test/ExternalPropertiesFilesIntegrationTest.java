@@ -13,8 +13,8 @@ import org.springframework.core.io.ClassPathResource;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.ANSI_BROWN_UNDERLINE_SEQUENCE;
-import static io.github.fbibonne.springaddons.boot.propertieslogger.PropertiesLogger.ANSI_NORMAL_SEQUENCE;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTestClasses.ANSI_BROWN_UNDERLINE_SEQUENCE;
+import static io.github.fbibonne.springaddons.boot.propertieslogger.ConstantsForTestClasses.ANSI_NORMAL_SEQUENCE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 

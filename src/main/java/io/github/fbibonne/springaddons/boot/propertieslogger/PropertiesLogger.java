@@ -20,25 +20,26 @@ public class PropertiesLogger {
     public static final String SEPARATION_LINE = "================================================================================";
     public static final String MASK = "******";
     private static final LocalLogger log = new LocalLogger(PropertiesLogger.class);
-    public static final String ANSI_CYAN_BOLD_SEQUENCE = "\u001B[1;36m";
-    public static final String ANSI_NORMAL_SEQUENCE = "\u001B[0m";
-    public static final String ANSI_BROWN_UNDERLINE_SEQUENCE = "\u001B[4;33m";
-    public static final String AINSI_PURPLE_ITALIC_SEQUENCE = "\u001B[1;3;35m";
-    public static final String AINSI_GREEN_BOLD_SEQUENCE = "\u001B[1;32m";
 
     final PropertiesWithHiddenValues propertiesWithHiddenValues;
     final AllowedPrefixForProperties allowedPrefixForProperties;
     final IgnoredPropertySources ignoredPropertySources;
     final EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment;
     final OriginFinder originFinder;
+    final Colorizer colorizer;
 
 
     PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment) {
+        this(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources, abstractEnvironment, new Colorizer(false));
+    }
+
+    PropertiesLogger(PropertiesWithHiddenValues propertiesWithHiddenValues, AllowedPrefixForProperties allowedPrefixForProperties, IgnoredPropertySources ignoredPropertySources, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment abstractEnvironment, Colorizer colorizer) {
         this.propertiesWithHiddenValues = propertiesWithHiddenValues;
         this.allowedPrefixForProperties = allowedPrefixForProperties;
         this.ignoredPropertySources = ignoredPropertySources;
         this.abstractEnvironment = abstractEnvironment;
         this.originFinder = new OriginFinder(abstractEnvironment.getPropertySources());
+        this.colorizer = colorizer;
     }
 
     /**
@@ -80,12 +81,12 @@ public class PropertiesLogger {
 
     private String headerBlock(Set<String> propertySourceNames) {
         return """
-                
+
                 %1$s
-                                        %2$sValues of properties from sources :%3$s
-                %4$s
+                                        %2$s
+                %3$s
                                                      ====
-                """.formatted(SEPARATION_LINE, AINSI_GREEN_BOLD_SEQUENCE, ANSI_NORMAL_SEQUENCE, propretySourceNamesOnePerLine(propertySourceNames));
+                """.formatted(SEPARATION_LINE, colorizer.colorizeHeaderIfEnabled("Values of properties from sources :"), propretySourceNamesOnePerLine(propertySourceNames));
     }
 
     private String toKeyValuesBlock(Map<String, String[]> propertyNamesBySource) {
@@ -146,13 +147,13 @@ public class PropertiesLogger {
     }
 
     private String toDisplayedLine(String key) {
-        return ANSI_CYAN_BOLD_SEQUENCE + key + ANSI_NORMAL_SEQUENCE + " = "
-                + ANSI_BROWN_UNDERLINE_SEQUENCE + resolveValueThenMaskItIfSecret(key, this.abstractEnvironment) + ANSI_NORMAL_SEQUENCE
-                + this.originFinder.findOriginFor(key).map(PropertiesLogger::originAsLine).orElse("");
+        return colorizer.colorizePropertyNameIfEnabled(key) + " = "
+                + colorizer.colorizeValueIfEnabled(resolveValueThenMaskItIfSecret(key, this.abstractEnvironment))
+                + this.originFinder.findOriginFor(key).map(this::originAsLine).orElse("");
     }
 
-    private static String originAsLine(String origin) {
-        return " ### " + AINSI_PURPLE_ITALIC_SEQUENCE + origin + ANSI_NORMAL_SEQUENCE + " ###";
+    private String originAsLine(String origin) {
+        return " ### " + colorizer.colorizeOriginIfEnabled(origin) + " ###";
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {

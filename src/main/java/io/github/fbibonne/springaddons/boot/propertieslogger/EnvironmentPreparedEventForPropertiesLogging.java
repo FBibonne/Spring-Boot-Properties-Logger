@@ -27,11 +27,13 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
     private static final Set<String> DEFAULT_PREFIX_FOR_PROPERTIES = Set.of("debug", "trace", "info", "logging", "spring", "server", "management", "springdoc", "properties");
     public static final Set<String> DEFAULT_SOURCES_IGNORED = Set.of(StandardEnvironment.SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME);
     private static final boolean DEFAULT_PROPERTIES_LOGGER_DISABLED = false;
+    private static final boolean DEFAULT_COLORATION_DISABLED = false;
 
     private static final String KEY_FOR_PROPS_WITH_HIDDEN_VALUES = "properties.logger.with-hidden-values";
     private static final String KEY_FOR_PREFIX_FOR_PROPERTIES = "properties.logger.prefix-for-properties";
     public static final String KEY_FOR_SOURCES_IGNORED = "properties.logger.sources-ignored";
     public static final String KEY_FOR_DISABLED = "properties.logger.disabled";
+    public static final String KEY_FOR_COLORATION_DISABLED = "properties.logger.coloration.disabled";
 
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
@@ -61,8 +63,9 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
         final PropertiesWithHiddenValues propertiesWithHiddenValues = new PropertiesWithHiddenValues(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PROPS_WITH_HIDDEN_VALUES, Set.class, DEFAULT_PROPS_WITH_HIDDEN_VALUES));
         final AllowedPrefixForProperties allowedPrefixForProperties = new AllowedPrefixForProperties(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_PREFIX_FOR_PROPERTIES, Set.class, DEFAULT_PREFIX_FOR_PROPERTIES));
         final IgnoredPropertySources ignoredPropertySources = new IgnoredPropertySources(getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_SOURCES_IGNORED,  Set.class, DEFAULT_SOURCES_IGNORED));
+        final boolean colorationDisabled = getPropertyOrDefaultAndTrace(abstractEnvironment, KEY_FOR_COLORATION_DISABLED, boolean.class, DEFAULT_COLORATION_DISABLED);
 
-        PropertiesLogger propertiesLogger = new PropertiesLogger(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources, abstractEnvironment);
+        PropertiesLogger propertiesLogger = new PropertiesLogger(propertiesWithHiddenValues, allowedPrefixForProperties, ignoredPropertySources, abstractEnvironment, new Colorizer(colorationDisabled));
         propertiesLogger.doLogProperties();
     }
 
