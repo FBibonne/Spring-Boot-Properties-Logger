@@ -13,8 +13,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = ExcludedPropertySourcesTest.class, properties = {
         "com.mycompany.serviceContactPassword = verysecretpassword",
-        "com.mycompany.serviceContactToken = ",
-        "properties.logger.prefix-for-properties = com"
+        "com.mycompany.service-contact-token = ",
+        "properties.logger.prefix-for-properties = com",
+        "properties.logger.with-hidden-values = passWord"
 })
 @Configuration
 @ExtendWith(OutputCaptureExtension.class)
@@ -29,8 +30,9 @@ class MaskedValuesTest {
     @Test
     void emptySecretShouldNotBeMasked(CapturedOutput output) {
         assertThat(output.toString())
-                .contains("com.mycompany.serviceContactToken")
-                .doesNotContain("com.mycompany.serviceContactToken" + ANSI_NORMAL_SEQUENCE + " = " + ANSI_BROWN_UNDERLINE_SEQUENCE + MASK);
+                .contains("""
+                %3$scom.mycompany.service-contact-token%2$s = %4$s%2$s ### %5$sFROM "com.mycompany.service-contact-token" from property source "Inlined Test Properties"%2$s ###
+                """.formatted(null, ANSI_NORMAL_SEQUENCE, ANSI_CYAN_BOLD_SEQUENCE, ANSI_BROWN_UNDERLINE_SEQUENCE, AINSI_PURPLE_ITALIC_SEQUENCE));
     }
 
 }
