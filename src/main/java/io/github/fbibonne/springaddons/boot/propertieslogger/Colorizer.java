@@ -5,6 +5,10 @@ import org.springframework.boot.ansi.AnsiColor;
 import org.springframework.boot.ansi.AnsiElement;
 import org.springframework.boot.ansi.AnsiStyle;
 
+import java.util.Arrays;
+import java.util.function.BiFunction;
+import java.util.stream.Collectors;
+
 /**
  * Applies ANSI color sequences to strings for console display, based on the type of data to colorize.
  * When coloration is disabled (property {@code properties.logger.coloration.disabled=true}), all methods
@@ -17,39 +21,43 @@ class Colorizer {
     private static final String ANSI_CLOSE = "m";
     private static final String ANSI_RESET = ANSI_OPEN + AnsiStyle.NORMAL + ANSI_CLOSE;
 
-    private final boolean colorationDisabled;
+    private final BiFunction<@Nullable String, AnsiElement[], String> styleApplierIfEnabled;
 
     Colorizer(boolean colorationDisabled) {
-        this.colorationDisabled = colorationDisabled;
+        this.styleApplierIfEnabled = colorationDisabled
+                ? Colorizer::noColoration
+                : Colorizer::applyStyles;
     }
 
-    String colorizePropertyName(String propertyName) {
-        if (colorationDisabled) return propertyName;
-        return styled(propertyName, AnsiStyle.BOLD, AnsiColor.CYAN);
+    String colorizePropertyNameIfEnabled(String propertyName) {
+        return applyStylesIfEnabled(propertyName, AnsiStyle.BOLD, AnsiColor.CYAN);
     }
 
-    String colorizeValue(@Nullable String value) {
-        String text = String.valueOf(value);
-        if (colorationDisabled) return text;
-        return styled(text, AnsiStyle.UNDERLINE, AnsiColor.YELLOW);
+    String colorizeValueIfEnabled(@Nullable String value) {
+        return applyStylesIfEnabled(value, AnsiStyle.UNDERLINE, AnsiColor.YELLOW);
     }
 
-    String colorizeOrigin(String origin) {
-        if (colorationDisabled) return origin;
-        return styled(origin, AnsiStyle.BOLD, AnsiStyle.ITALIC, AnsiColor.MAGENTA);
+    String colorizeOriginIfEnabled(String origin) {
+        return applyStylesIfEnabled(origin, AnsiStyle.BOLD, AnsiStyle.ITALIC, AnsiColor.MAGENTA);
     }
 
-    String colorizeHeader(String header) {
-        if (colorationDisabled) return header;
-        return styled(header, AnsiStyle.BOLD, AnsiColor.GREEN);
+    String colorizeHeaderIfEnabled(String header) {
+        return applyStylesIfEnabled(header, AnsiStyle.BOLD, AnsiColor.GREEN);
     }
 
-    private static String styled(String text, AnsiElement... styles) {
-        StringBuilder sb = new StringBuilder(ANSI_OPEN);
-        for (int i = 0; i < styles.length; i++) {
-            if (i > 0) sb.append(";");
-            sb.append(styles[i]);
-        }
-        return sb.append(ANSI_CLOSE).append(text).append(ANSI_RESET).toString();
+    private String applyStylesIfEnabled(@Nullable String propertyName, AnsiElement... ansiElements) {
+        return styleApplierIfEnabled.apply(propertyName, ansiElements);
+    }
+
+    private static String applyStyles(@Nullable String text, AnsiElement... styles) {
+        return ANSI_OPEN
+                + Arrays.stream(styles).map(AnsiElement::toString).collect(Collectors.joining(";"))
+                + ANSI_CLOSE
+                + text
+                + ANSI_RESET;
+    }
+
+    private static String noColoration(@Nullable String text, AnsiElement[] ignored) {
+        return String.valueOf(text);
     }
 }

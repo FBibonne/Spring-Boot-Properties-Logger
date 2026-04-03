@@ -86,7 +86,7 @@ public class PropertiesLogger {
                                         %2$s
                 %3$s
                                                      ====
-                """.formatted(SEPARATION_LINE, colorizer.colorizeHeader("Values of properties from sources :"), propretySourceNamesOnePerLine(propertySourceNames));
+                """.formatted(SEPARATION_LINE, colorizer.colorizeHeaderIfEnabled("Values of properties from sources :"), propretySourceNamesOnePerLine(propertySourceNames));
     }
 
     private String toKeyValuesBlock(Map<String, String[]> propertyNamesBySource) {
@@ -147,13 +147,13 @@ public class PropertiesLogger {
     }
 
     private String toDisplayedLine(String key) {
-        return colorizer.colorizePropertyName(key) + " = "
-                + colorizer.colorizeValue(resolveValueThenMaskItIfSecret(key, this.abstractEnvironment))
+        return colorizer.colorizePropertyNameIfEnabled(key) + " = "
+                + colorizer.colorizeValueIfEnabled(resolveValueThenMaskItIfSecret(key, this.abstractEnvironment))
                 + this.originFinder.findOriginFor(key).map(this::originAsLine).orElse("");
     }
 
     private String originAsLine(String origin) {
-        return " ### " + colorizer.colorizeOrigin(origin) + " ###";
+        return " ### " + colorizer.colorizeOriginIfEnabled(origin) + " ###";
     }
 
     private @Nullable String resolveValueThenMaskItIfSecret(String key, EnvironmentPreparedEventForPropertiesLogging.CustomAbstractEnvironment environment) {
