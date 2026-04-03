@@ -52,6 +52,7 @@ springdoc.swagger-ui.path = / ### FROM class path resource [application.properti
 springdoc.swagger-ui.syntax-highlight.activated = false ### FROM class path resource [application.properties] - 9:51 ###
 spring.application.pid = 379695 ### FROM "spring.application.pid" from property source "applicationInfo" ###
 spring.datasource.password = ****** ### FROM System Environment Property "spring.datasource.password" ###
+spring.datasource.secret =  ### FROM class path resource [application.properties] - 8:25 ###
 spring.datasource.username = user ### FROM class path resource [application.properties] - 7:30 ###
 spring.security.oauth2.resourceserver.jwt.jwk-set-uri = ### FROM class path resource [application.properties] - 6:57 ###
 ================================================================================
