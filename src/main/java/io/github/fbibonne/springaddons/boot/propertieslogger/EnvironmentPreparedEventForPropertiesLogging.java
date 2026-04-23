@@ -8,14 +8,12 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 /**
  * Spring ApplicationListener which triggers on {@link ApplicationEnvironmentPreparedEvent} to start properties logging process.
- * If the logging is enabled (with property {@code properties.logger.disabled} at {@code false} (which is default value) ) and the
- * environment associated with the applicationEnvironmentPreparedEvent is an {@link ConfigurableEnvironment}, then the listener
- * will log properties using provided configuration. The responsibility of this class is only to trigger the process and collect the
+ * If the logging is enabled (with property {@code properties.logger.disabled} at {@code false} (which is default value) ),
+ * the listener will log properties using provided configuration. The responsibility of this class is only to trigger the process and collect the
  * configuration for logging properties (properties starting with {@code properties.logger}) in the environment. It delegates the
  * logging process to an instance of {@link PropertiesLogger}
  */
@@ -37,20 +35,12 @@ public record EnvironmentPreparedEventForPropertiesLogging() implements Applicat
 
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-        final Environment environment = event.getEnvironment();
+        final ConfigurableEnvironment environment = event.getEnvironment();
         if (loggingDisabled(environment)) {
             log.debug(() -> "PropertiesLogger is disabled");
             return;
         }
-        abstractEnvironment(environment).ifPresent(this::doLogProperties);
-    }
-
-    private Optional<CustomAbstractEnvironment> abstractEnvironment(Environment environment) {
-        if (environment instanceof ConfigurableEnvironment configurableEnvironment) {
-            return Optional.of(new CustomAbstractEnvironment(configurableEnvironment));
-        }
-        log.info(()->"Environment "+environment+" is not instance of ConfigurableEnvironment : PropertiesLogger WILL NOT LOG PROPERTIES");
-        return Optional.empty();
+        doLogProperties(new CustomAbstractEnvironment(environment));
     }
 
     private boolean loggingDisabled(Environment environment) {
